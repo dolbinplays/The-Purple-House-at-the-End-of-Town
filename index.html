@@ -60,7 +60,7 @@ button:disabled{opacity:.52;filter:grayscale(.4);cursor:not-allowed}
   <div id="gameBox">
     <canvas id="c"></canvas>
     <div id="hud">
-      <div class="pill" id="versionPill">v.0.26.05.23.0915</div>
+      <div class="pill" id="versionPill">v.0.26.05.23.0921</div>
       <div class="pill" id="dayPill">Day 1</div>
       <div class="pill" id="timePill">Morning</div>
       <div class="pill" id="coinPill">Coins 12</div>
@@ -91,7 +91,7 @@ button:disabled{opacity:.52;filter:grayscale(.4);cursor:not-allowed}
   </div>
   <aside id="side">
     <h1>The Purple House<br>at the End of Town</h1>
-    <p class="small">v.0.26.05.23.0915 · Isometric Village Hub build. Visual direction now moves toward the cozy-spooky diorama art style while keeping the current gameplay systems intact.</p>
+    <p class="small">v.0.26.05.23.0921 · Isometric Village Hub build. Visual direction now moves toward the cozy-spooky diorama art style while keeping the current gameplay systems intact.</p>
     <h2>Audio</h2><div id="audioControls"><button class="secondary sectionButton" id="audioToggle" onclick="toggleAudio()">Enable Audio</button><div id="audioStatus">Soundtrack and SFX start after enabling audio or your first key/click.</div></div><h2>Controls</h2>
     <p><span class="kbd">WASD</span>/<span class="kbd">Arrows</span> move · <span class="kbd">E</span> interact · <span class="kbd">Esc</span> close</p>
     <h2>Familiar</h2><div id="famBox" class="small">Choose one at the Familiar Nook.</div>
@@ -105,7 +105,7 @@ button:disabled{opacity:.52;filter:grayscale(.4);cursor:not-allowed}
   </aside>
 </div>
 <script>
-const BUILD_VERSION='v.0.26.05.23.0915';
+const BUILD_VERSION='v.0.26.05.23.0921';
 const SAVE_KEY='purpleHouse_'+BUILD_VERSION;
 const WORLD_W=1672, WORLD_H=941;
 const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');
@@ -380,7 +380,21 @@ function atticMenu(){
   show('Attic Divination Mirror',`<p>A silver-purple mirror hangs beneath the crooked roof. It can reveal one hidden truth about today's visitor.</p><p><b>Current visitor:</b> ${q.name}</p><div class="choices"><button onclick="useDivination()">Scry today's request</button></div><p class="small">Raven, Cat, Bat, Fox, and Toad familiars add different hints.</p>`);
 }
 function useDivination(){playSfx('ghost');if(!state.upgrades.Attic||state.divinationUsedToday)return; const q=quests[state.questIndex%quests.length]; const text=divinationOmen(q); state.divinationUsedToday=true; state.revealedQuest={id:q.id,day:state.day,text}; state.stats.Balance+=1; log(`Attic vision: ${q.name}'s request has a hidden truth. The mirror whispers enough to make you cautious.`); closeModal(); show('Attic Vision Revealed',`<p>${esc(text)}</p><p class="small">This clue will also appear on the visitor request screen today.</p>`); renderSide();}
-function familiarMenu(){playSfx('familiar');show('Choose Your Familiar',`<p>Your familiar follows with the same cheerful bounce as the witch and gives a small passive bonus.</p><div class="choices">${fams.map(f=>`<button onclick='state.familiar=${JSON.stringify(f)};playSfx('familiar');log("${f.name} chose you as much as you chose them.");closeModal();renderSide();'>${f.name}<br><span class="small">${f.bonus}</span></button>`).join('')}</div>`);}
+function selectFamiliar(index){
+  const f=fams[index];
+  if(!f)return;
+  const oldName=state.familiar&&state.familiar.name?state.familiar.name:null;
+  state.familiar=JSON.parse(JSON.stringify(f));
+  playSfx('familiar');
+  log(oldName&&oldName!==f.name?`${f.name} takes over from ${oldName} as your familiar.`:`${f.name} chose you as much as you chose them.`);
+  closeModal();
+  renderSide();
+}
+function familiarMenu(){
+  playSfx('familiar');
+  const current=state.familiar&&state.familiar.name?state.familiar.name:'None selected';
+  show('Choose Your Familiar',`<p>Your familiar follows with the same cheerful bounce as the witch and gives a small passive bonus.</p><p><b>Current familiar:</b> ${esc(current)}</p><div class="choices">${fams.map((f,i)=>`<button onclick="selectFamiliar(${i})">${state.familiar&&state.familiar.name===f.name?'✓ ':''}${f.name}<br><span class="small">${f.bonus}</span></button>`).join('')}</div><p class="small">You can switch familiars any time from the Familiar Nook.</p>`);
+}
 function brewMenu(){playSfx('brew');show('Cauldron',`<p>The cauldron burbles. Brew simple potions from ingredients you gather.</p><div class="choices"><button class="good" onclick="brew('Kind Remedy',['Sunmint','Lantern Moss'],'Kindness')">Kind Remedy — Sunmint + Lantern Moss</button><button class="bad" onclick="brew('Minor Hex',['Thornroot','Grave Soil'],'Power')">Minor Hex — Thornroot + Grave Soil</button><button onclick="brew('Balanced Charm',['Dewberries','Spirit Thread'],'Balance')">Balanced Charm — Dewberries + Spirit Thread</button><button onclick="brew('Trickster Tonic',['Whisper Mold','Moon Chamomile'],'Mischief')">Trickster Tonic — Whisper Mold + Moon Chamomile</button></div><p class="small">Potions still work like the previous build while the visuals move closer to the original purple-house inspiration.</p>`);}
 function brew(name,ings,stat){if(consume(ings)){playSfx('brew');state.inventory[name]=(state.inventory[name]||0)+1; state.stats[stat]+=2; state.coins+=2; log(`Brewed ${name}. The shop smells like ${stat.toLowerCase()}.`); closeModal();} else alert('Missing ingredients: '+ings.join(' + ')); renderSide();}
 function questMenu(){playSfx('shop');if(state.servedToday){show('Potion Shop',`<p>You already handled today’s visitor. End the day to invite tomorrow’s trouble.</p>`);return;} let q=quests[state.questIndex%quests.length]; let rel=relHTML(q.id); let reveal=(state.revealedQuest&&state.revealedQuest.day===state.day&&state.revealedQuest.id===q.id)?`<div class="notice"><b>Attic Vision:</b> ${esc(state.revealedQuest.text)}</div>`:`<p class="small">Unlock/use the Attic Divination Mirror to reveal hidden truths before choosing.</p>`; let html=`<p><b>${q.ask}</b></p>${reveal}<h2>Village Memory: ${q.name}</h2>${rel}<div class="choices">`; for(const [type,c] of Object.entries(q.choices)){ let cls=type==='good'?'good':type==='evil'?'bad':type==='mischief'?'secondary':''; let label={good:'Good Witch',evil:'Dark Witch',gray:'Gray Witch',mischief:'Mischief Witch'}[type]; let ok=hasAll(c.need); html+=`<button class="${cls}" ${ok?'':'disabled'} onclick="resolveQuest('${type}')">${label}: ${c.text}<br><span class="small">Requires: ${c.need.join(' + ')}${ok?'':' — missing ingredients'}</span></button>`; } html+=`</div><p class="small">Named villager memory, follow-up rumors, ghost standing, and attic divination are all preserved in this build.</p>`; show(q.name,html);}
@@ -416,4 +430,6 @@ update();
 
 
 
-</script></body></html>
+
+</script>
+</body></html>
