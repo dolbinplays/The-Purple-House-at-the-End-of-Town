@@ -47,6 +47,7 @@
     <p><span class="kbd">WASD</span>/<span class="kbd">Arrows</span> move · <span class="kbd">E</span> interact · <span class="kbd">Esc</span> close</p>
     <h2>Familiar</h2><div id="famBox" class="small">Choose one at the Familiar Nook.</div>
     <h2>Inventory</h2><div id="inv" class="inv"></div>
+    <h2>Spirit Ledger</h2><div id="spiritLedger" class="small"></div>
     <h2>Witch Tendencies</h2><div class="statgrid" id="stats"></div>
     <h2>House Upgrades</h2><div id="upgrades" class="small"></div>
     <h2>Story Log</h2><div id="log"></div>
@@ -56,7 +57,7 @@
 const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');
 const promptEl=document.getElementById('prompt'),modal=document.getElementById('modal'),modalCard=document.getElementById('modalCard');
 let W=900,H=650,keys={},near=null,frame=0;
-const state={day:1,time:'Morning',coins:12,familiar:null,inventory:{Sunmint:2,Thornroot:1},stats:{Kindness:0,Power:0,Balance:0,Greed:0,Mischief:0},upgrades:{Shop:false,Attic:false,Greenhouse:false,Basement:false},servedToday:false,questIndex:0,graveRisk:0};
+const state={day:1,time:'Morning',coins:12,familiar:null,inventory:{Sunmint:2,Thornroot:1},stats:{Kindness:0,Power:0,Balance:0,Greed:0,Mischief:0},upgrades:{Shop:false,Attic:false,Greenhouse:false,Basement:false},servedToday:false,questIndex:0,graveRisk:0,ghostFavor:0,ghostDebt:0,prepaidGhosts:0,offeringsLeft:0};
 const witch={x:420,y:410,vx:0,vy:0,dir:1};
 const logs=[];
 const quests=[
@@ -118,6 +119,11 @@ function drawWorld(){let s=sc();
  // graveyard
  ctx.fillStyle='#334047';ctx.beginPath();ctx.ellipse(sx(155),sy(200),sx(130),sy(92),-.2,0,Math.PI*2);ctx.fill();
  for(let i=0;i<6;i++){let x=70+i*34,y=160+(i%2)*28;roundRect(sx(x),sy(y),sx(26),sy(42),8*s,'#7d7f88','#4a4c55');}
+ // ghost offering altar
+ roundRect(sx(185),sy(250),sx(54),sy(24),8*s,'#77615b','#d9b465');
+ ctx.fillStyle='#b8fff1';ctx.shadowColor='#b8fff1';ctx.shadowBlur=12*s;ctx.beginPath();ctx.arc(sx(198),sy(242),5*s,0,6.28);ctx.arc(sx(218),sy(240),4*s,0,6.28);ctx.fill();ctx.shadowBlur=0;
+ if(state.offeringsLeft>0){ctx.fillStyle='#ffe8a7';ctx.fillRect(sx(201),sy(257),sx(21),sy(7));}
+ if(state.prepaidGhosts>0){ctx.fillStyle='#b8fff1';ctx.globalAlpha=.35;ctx.beginPath();ctx.arc(sx(212),sy(261),28*s,0,6.28);ctx.fill();ctx.globalAlpha=1;}
  ctx.fillStyle='rgba(164,225,214,.6)';for(let i=0;i<10;i++){ctx.beginPath();ctx.arc(sx(72+i*18),sy(232+(i%3)*9),3*s,0,6.28);ctx.fill();}
  // gardens
  function garden(cx,cy,w,h,type){roundRect(sx(cx-w/2),sy(cy-h/2),sx(w),sy(h),18*s,type==='help'?'#456e3f':'#493046','#2b1b2e');for(let i=0;i<16;i++){let x=cx-w/2+20+(i%4)*35,y=cy-h/2+20+Math.floor(i/4)*22;ctx.fillStyle=type==='help'?['#87d674','#e8d873','#75c7a0'][i%3]:['#93d65e','#b04b8d','#5da05b'][i%3];ctx.beginPath();ctx.ellipse(sx(x),sy(y),sx(8),sy(14),i,0,6.28);ctx.fill();}}
@@ -144,10 +150,70 @@ function closeModal(){modal.style.display='none';}
 function show(title,html){modalCard.innerHTML=`<h2>${title}</h2>${html}<button class="secondary" onclick="closeModal()">Close</button>`;modal.style.display='flex';}
 function addInv(name,n=1){state.inventory[name]=(state.inventory[name]||0)+n;log(`Gathered ${n} ${name}.`);renderSide();}
 function consume(list){for(const k of list){if((state.inventory[k]||0)<=0)return false;}list.forEach(k=>state.inventory[k]--);return true;}
+
+function graveyardMenu(){
+ show('Graveyard Gate',`<p>The graveyard is not just a gathering spot. It is a neighborhood. The dead appreciate manners.</p>
+ <p class="small">Prepayments are left before gathering and reduce the chance of offending spirits. Offerings can repay ghost debt or build favor for later.</p>
+ <div class="choices">
+ <button onclick="gatherGraveyard()">Gather ingredients from the graves<br><span class="small">May create ghost debt if you take without proper respect.</span></button>
+ <button class="good" onclick="leaveGhostOffering('coins')">Leave a candle-and-coin offering — 3 coins<br><span class="small">Repays 1 ghost debt, or adds 1 spirit favor if you owe nothing.</span></button>
+ <button class="secondary" onclick="leaveGhostOffering('ingredient')">Leave an ingredient offering — Bone Dust or Grave Soil<br><span class="small">A respectful trade that improves Balance and spirit favor.</span></button>
+ <button onclick="makeGhostPrepayment()">Make a prepayment before gathering — 5 coins<br><span class="small">The next graveyard gathering is safer and may yield an extra ingredient.</span></button>
+ </div>`);
+}
+function gatherGraveyard(){
+ const items=['Grave Soil','Bone Dust','Ghostcap','Spirit Thread'];
+ addInv(items[Math.floor(Math.random()*items.length)]);
+ let protectedByPrepay=state.prepaidGhosts>0;
+ if(protectedByPrepay){
+   state.prepaidGhosts--;
+   state.ghostFavor+=1;
+   if(Math.random()<.55)addInv(items[Math.floor(Math.random()*items.length)]);
+   log('The ghosts accept your prepayment. Cold hands guide you to safer, richer soil.');
+ }else{
+   state.graveRisk++;
+   let risk=.25+state.graveRisk*.07-Math.min(.18,state.ghostFavor*.03);
+   if(Math.random()<risk){
+     state.ghostDebt++;
+     log('A ghost noticed you taking things. A pale mark appears in the Spirit Ledger.');
+     state.stats.Balance+=1;
+   }else if(state.ghostFavor>0){
+     state.ghostFavor--;
+     log('A whisper from an old offering shields you from graveyard trouble.');
+   }
+ }
+ state.time='Evening';closeModal();renderSide();
+}
+function leaveGhostOffering(kind){
+ if(kind==='coins'){
+   if(state.coins<3){alert('Not enough coins for a candle-and-coin offering.');return;}
+   state.coins-=3;state.offeringsLeft++;
+   if(state.ghostDebt>0){state.ghostDebt--;log('You leave a candle-and-coin offering. One ghost debt is forgiven.');}
+   else{state.ghostFavor++;log('You leave a candle-and-coin offering. The graveyard remembers your respect.');}
+   state.stats.Kindness+=1;state.stats.Balance+=1;
+ }
+ if(kind==='ingredient'){
+   let used=null;
+   if((state.inventory['Bone Dust']||0)>0)used='Bone Dust';
+   else if((state.inventory['Grave Soil']||0)>0)used='Grave Soil';
+   if(!used){alert('You need Bone Dust or Grave Soil to leave this offering.');return;}
+   state.inventory[used]--;state.offeringsLeft++;state.ghostFavor+=2;state.stats.Balance+=2;
+   if(state.ghostDebt>0)state.ghostDebt--;
+   log(`You return ${used} to the dead. The graveyard grows quieter and kinder.`);
+ }
+ closeModal();renderSide();
+}
+function makeGhostPrepayment(){
+ if(state.coins<5){alert('Not enough coins for a prepayment.');return;}
+ state.coins-=5;state.prepaidGhosts++;state.offeringsLeft++;state.stats.Balance+=1;
+ log('You tuck a prepayment beneath the crooked graveyard stone. The next gathering is protected.');
+ closeModal();renderSide();
+}
+
 function interact(){if(!near)return; const id=near.id;
  if(id==='helpGarden'){const items=['Sunmint','Lantern Moss','Dewberries','Moon Chamomile'];addInv(items[Math.floor(Math.random()*items.length)]);state.time='Afternoon';}
  if(id==='poisonGarden'){const items=['Thornroot','Nightshade Bells','Widowcap','Whisper Mold'];addInv(items[Math.floor(Math.random()*items.length)]);state.stats.Power+=1;state.time='Afternoon';}
- if(id==='graveyard'){const items=['Grave Soil','Bone Dust','Ghostcap','Spirit Thread'];addInv(items[Math.floor(Math.random()*items.length)]);state.graveRisk++;if(Math.random()<.25+state.graveRisk*.05){log('A ghost noticed you taking things. It may ask for payment later.');state.stats.Balance+=1;}state.time='Evening';}
+ if(id==='graveyard') graveyardMenu();
  if(id==='familiar') familiarMenu();
  if(id==='cauldron') brewMenu();
  if(id==='shop') questMenu();
@@ -174,8 +240,8 @@ function resolveQuest(type){let q=quests[state.questIndex%quests.length];state.s
 function upgradeMenu(){const opts=[['Shop',18,'More shelves, more customers, and a warmer shopfront.'],['Attic',22,'Unlocks divination, dream magic, and secret consequences.'],['Greenhouse',25,'Improves helpful garden yields and rare herbs.'],['Basement',30,'Forbidden rituals, bottled secrets, and dangerous choices.']];
  show('House Customization & Unlocks',`<p>The purple house changes as you invest in it. Future versions will also make it visually reflect your moral path.</p><div class="choices">${opts.map(o=>`<button onclick="buyUpgrade('${o[0]}',${o[1]})">${state.upgrades[o[0]]?'✓ ':''}${o[0]} — ${o[1]} coins<br><span class="small">${o[2]}</span></button>`).join('')}</div>`);}
 function buyUpgrade(name,cost){if(state.upgrades[name]){alert('Already unlocked.');return;}if(state.coins<cost){alert('Not enough coins.');return;}state.coins-=cost;state.upgrades[name]=true;log(`Unlocked the ${name}. The purple house creaked happily.`);closeModal();renderSide();}
-function endDay(){let top=Object.entries(state.stats).sort((a,b)=>b[1]-a[1])[0];state.day++;state.time='Morning';state.servedToday=false;state.graveRisk=Math.max(0,state.graveRisk-1);state.inventory.Sunmint=(state.inventory.Sunmint||0)+1;state.inventory.Thornroot=(state.inventory.Thornroot||0)+1;log(`Day ${state.day} begins. The village whispers most about your ${top[0].toLowerCase()}.`);renderSide();}
-function renderSide(){document.getElementById('dayPill').textContent='Day '+state.day;document.getElementById('timePill').textContent=state.time;document.getElementById('coinPill').textContent='Coins '+state.coins;document.getElementById('famBox').innerHTML=state.familiar?`<b>${state.familiar.name}</b><br>${state.familiar.bonus}`:'Choose one at the Familiar Nook.';document.getElementById('inv').innerHTML=Object.entries(state.inventory).filter(([k,v])=>v>0).map(([k,v])=>`<span class="tag">${k} ×${v}</span>`).join('')||'<span class="small">Empty</span>';let max=Math.max(5,...Object.values(state.stats));document.getElementById('stats').innerHTML=Object.entries(state.stats).map(([k,v])=>`<div class="stat"><b>${k}</b>: ${v}<div class="bar"><div class="fill" style="width:${Math.min(100,v/max*100)}%"></div></div></div>`).join('');document.getElementById('upgrades').innerHTML=Object.entries(state.upgrades).map(([k,v])=>`${v?'✓':'○'} ${k}`).join('<br>');document.getElementById('log').innerHTML=logs.map(l=>`<div>${l}</div>`).join('')||'<div>Arrive at the crooked purple house. The village is already whispering.</div>';}
+function endDay(){let top=Object.entries(state.stats).sort((a,b)=>b[1]-a[1])[0];state.day++;state.time='Morning';state.servedToday=false;state.graveRisk=Math.max(0,state.graveRisk-1);state.inventory.Sunmint=(state.inventory.Sunmint||0)+1;state.inventory.Thornroot=(state.inventory.Thornroot||0)+1;if(state.ghostDebt>=3){state.coins=Math.max(0,state.coins-2);state.stats.Power+=1;log('Unpaid ghost debts rattle the windows overnight. Two coins vanish from your counter.');}else if(state.ghostFavor>=3){state.inventory['Spirit Thread']=(state.inventory['Spirit Thread']||0)+1;state.ghostFavor-=1;log('A grateful ghost leaves Spirit Thread on your doorstep before dawn.');}log(`Day ${state.day} begins. The village whispers most about your ${top[0].toLowerCase()}.`);renderSide();}
+function renderSide(){document.getElementById('dayPill').textContent='Day '+state.day;document.getElementById('timePill').textContent=state.time;document.getElementById('coinPill').textContent='Coins '+state.coins;document.getElementById('famBox').innerHTML=state.familiar?`<b>${state.familiar.name}</b><br>${state.familiar.bonus}`:'Choose one at the Familiar Nook.';document.getElementById('inv').innerHTML=Object.entries(state.inventory).filter(([k,v])=>v>0).map(([k,v])=>`<span class="tag">${k} ×${v}</span>`).join('')||'<span class="small">Empty</span>';document.getElementById('spiritLedger').innerHTML=`Favor: <b>${state.ghostFavor}</b> · Debt: <b>${state.ghostDebt}</b> · Prepaid gatherings: <b>${state.prepaidGhosts}</b>`;let max=Math.max(5,...Object.values(state.stats));document.getElementById('stats').innerHTML=Object.entries(state.stats).map(([k,v])=>`<div class="stat"><b>${k}</b>: ${v}<div class="bar"><div class="fill" style="width:${Math.min(100,v/max*100)}%"></div></div></div>`).join('');document.getElementById('upgrades').innerHTML=Object.entries(state.upgrades).map(([k,v])=>`${v?'✓':'○'} ${k}`).join('<br>');document.getElementById('log').innerHTML=logs.map(l=>`<div>${l}</div>`).join('')||'<div>Arrive at the crooked purple house. The village is already whispering.</div>';}
 window.addEventListener('keydown',e=>{keys[e.key]=true;if(e.key.toLowerCase()==='e')interact();if(e.key==='Escape')closeModal();});window.addEventListener('keyup',e=>keys[e.key]=false);
 document.getElementById('actBtn').onclick=interact;document.querySelectorAll('[data-dir]').forEach(b=>{let d=b.dataset.dir;b.onpointerdown=()=>{keys[{up:'ArrowUp',down:'ArrowDown',left:'ArrowLeft',right:'ArrowRight'}[d]]=true};b.onpointerup=b.onpointerleave=()=>{keys[{up:'ArrowUp',down:'ArrowDown',left:'ArrowLeft',right:'ArrowRight'}[d]]=false};});
 log('You inherited the purple house at the end of town. It smells like rain, candlewax, and decisions.');renderSide();update();
