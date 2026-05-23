@@ -14,9 +14,9 @@ canvas{width:100%;height:100%;display:block;background:radial-gradient(circle at
 .pill{background:rgba(34,24,41,.88);border:2px solid rgba(217,180,101,.6);border-radius:999px;padding:6px 12px;font-weight:700;font-size:13px;box-shadow:0 4px 10px rgba(0,0,0,.25)}
 .floatBtns{position:absolute;left:18px;top:88px;display:grid;gap:10px;z-index:2}
 .floatBtns button{min-width:150px}
-.bottomPanel{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);display:flex;gap:10px;align-items:end;z-index:2;pointer-events:none}
-#invTray{pointer-events:auto;min-width:420px;max-width:70vw;background:rgba(32,20,38,.88);border:2px solid rgba(217,180,101,.55);border-radius:18px;padding:10px 12px;box-shadow:0 10px 24px rgba(0,0,0,.35)}
-#prompt{position:absolute;left:50%;bottom:110px;transform:translateX(-50%);background:rgba(35,24,39,.92);border:2px solid var(--gold);border-radius:14px;padding:10px 14px;font-weight:800;display:none;box-shadow:0 8px 20px rgba(0,0,0,.35);text-align:center;max-width:90%;z-index:2;}
+.bottomPanel{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);display:flex;gap:12px;align-items:end;z-index:2;pointer-events:none;max-width:92%;}
+#invTray{pointer-events:auto;min-width:320px;max-width:min(560px,44vw);background:rgba(32,20,38,.90);border:2px solid rgba(217,180,101,.55);border-radius:18px;padding:8px 10px;box-shadow:0 10px 24px rgba(0,0,0,.35);backdrop-filter:blur(2px)}
+#prompt{position:absolute;left:50%;top:86px;transform:translateX(-50%);background:rgba(35,24,39,.94);border:2px solid var(--gold);border-radius:14px;padding:10px 14px;font-weight:800;display:none;box-shadow:0 8px 20px rgba(0,0,0,.35);text-align:center;max-width:min(760px,88%);z-index:2;}
 #mobile{position:absolute;right:16px;bottom:14px;display:none;grid-template-columns:48px 48px 48px;grid-template-rows:48px 48px 48px;gap:4px;opacity:.78;z-index:2}
 #mobile button{text-align:center;padding:0;margin:0;border-radius:14px}
 #side{border:4px solid #120b15;border-radius:22px;background:linear-gradient(180deg,#35213f,#1f1526);box-shadow:0 16px 45px rgba(0,0,0,.55);padding:14px;display:flex;flex-direction:column;min-height:0;overflow:auto;}
@@ -43,13 +43,13 @@ button:disabled{opacity:.52;filter:grayscale(.4);cursor:not-allowed}
 .choices{display:grid;gap:6px}
 .kbd{display:inline-block;background:#17111b;border:1px solid #6b5875;border-radius:7px;padding:1px 6px;font-size:12px;color:#fff}
 .wide{grid-column:1/4}
-.inv{display:flex;gap:6px;flex-wrap:wrap} .tag{font-size:12px;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.14);padding:5px 7px;border-radius:999px}
+.inv{display:flex;gap:6px;flex-wrap:wrap;align-items:flex-start} .tag{font-size:12px;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.14);padding:4px 7px;border-radius:999px;line-height:1.1}
 .rel{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin:7px 0} .rel div{background:rgba(255,255,255,.08);border-radius:9px;padding:5px;font-size:12px}
 .sectionButton{width:100%;text-align:center;margin-top:4px}
 #mapBox{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.11);border-radius:12px;padding:8px;font-size:13px;}
 #actionButtons{display:flex;gap:8px;pointer-events:auto}
 #actionButtons button{min-width:160px}
-@media(max-width:980px){#wrap{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) 360px} #mobile{display:grid} h1{font-size:20px} .floatBtns{top:118px} #actionButtons{display:none} #invTray{min-width:280px}}
+@media(max-width:980px){#wrap{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) 360px} #mobile{display:grid} h1{font-size:20px} .floatBtns{top:118px} #actionButtons{display:none} #invTray{min-width:260px;max-width:78vw} #prompt{top:124px;max-width:84vw}}
 </style>
 </head>
 <body>
@@ -57,7 +57,7 @@ button:disabled{opacity:.52;filter:grayscale(.4);cursor:not-allowed}
   <div id="gameBox">
     <canvas id="c"></canvas>
     <div id="hud">
-      <div class="pill" id="versionPill">v.0.26.05.23.0848</div>
+      <div class="pill" id="versionPill">v.0.26.05.23.0855</div>
       <div class="pill" id="dayPill">Day 1</div>
       <div class="pill" id="timePill">Morning</div>
       <div class="pill" id="coinPill">Coins 12</div>
@@ -88,7 +88,7 @@ button:disabled{opacity:.52;filter:grayscale(.4);cursor:not-allowed}
   </div>
   <aside id="side">
     <h1>The Purple House<br>at the End of Town</h1>
-    <p class="small">v.0.26.05.23.0848 · Isometric Village Hub build. Visual direction now moves toward the cozy-spooky diorama art style while keeping the current gameplay systems intact.</p>
+    <p class="small">v.0.26.05.23.0855 · Isometric Village Hub build. Visual direction now moves toward the cozy-spooky diorama art style while keeping the current gameplay systems intact.</p>
     <h2>Controls</h2>
     <p><span class="kbd">WASD</span>/<span class="kbd">Arrows</span> move · <span class="kbd">E</span> interact · <span class="kbd">Esc</span> close</p>
     <h2>Familiar</h2><div id="famBox" class="small">Choose one at the Familiar Nook.</div>
@@ -102,7 +102,7 @@ button:disabled{opacity:.52;filter:grayscale(.4);cursor:not-allowed}
   </aside>
 </div>
 <script>
-const BUILD_VERSION='v.0.26.05.23.0848';
+const BUILD_VERSION='v.0.26.05.23.0855';
 const SAVE_KEY='purpleHouse_'+BUILD_VERSION;
 const WORLD_W=1672, WORLD_H=941;
 const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');
@@ -325,7 +325,7 @@ function update(){
 function interact(){if(!near)return; const id=near.id; if(id==='house')houseMenu(); if(id==='familiar')familiarMenu(); if(id==='helpGarden')helpGardenGather(); if(id==='poisonGarden')poisonGardenGather(); if(id==='graveyard')graveyardMenu(); if(id==='paths')exploreMenu(); if(id==='well')wellMenu(); renderSide();}
 function helpGardenGather(){const items=['Sunmint','Lantern Moss','Dewberries','Moon Chamomile']; addInv(items[Math.floor(Math.random()*items.length)],state.upgrades.Greenhouse?2:1); state.time='Afternoon';}
 function poisonGardenGather(){const items=['Thornroot','Nightshade Bells','Widowcap','Whisper Mold']; addInv(items[Math.floor(Math.random()*items.length)]); state.stats.Power+=1; state.time='Afternoon';}
-function houseMenu(){show('The Purple House',`<p>The crooked purple house now appears as an isometric village hub with animated witch and familiar sprites while keeping the same systems underneath it. Use the house to run the core of your witch life.</p><div class="choices"><button class="good" onclick="questMenu()">Open Shop / Serve Today's Visitor</button><button onclick="brewMenu()">Brew at the Cauldron</button><button class="secondary" onclick="atticMenu()">Use the Attic Divination Mirror</button><button class="secondary" onclick="upgradeMenu()">House Upgrades</button><button class="secondary" onclick="endDay()">Go to Bed / End Day</button></div>`);}
+function houseMenu(){show('The Purple House',`<p>The crooked purple house now appears as an isometric village hub with animated witch and familiar sprites while keeping the same systems underneath it. This patch also repositions the interaction hint so the inventory no longer covers it. Use the house to run the core of your witch life.</p><div class="choices"><button class="good" onclick="questMenu()">Open Shop / Serve Today's Visitor</button><button onclick="brewMenu()">Brew at the Cauldron</button><button class="secondary" onclick="atticMenu()">Use the Attic Divination Mirror</button><button class="secondary" onclick="upgradeMenu()">House Upgrades</button><button class="secondary" onclick="endDay()">Go to Bed / End Day</button></div>`);}
 function graveyardMenu(){show('Spirit Graveyard',`<p>The fenced graveyard behind the house is both ingredient source and sacred place.</p><div class="choices"><button onclick="graveyardGather()">Gather Graveyard Ingredients</button><button class="secondary" onclick="offeringMenu()">Use the Spirit Offering Plate</button></div><p class="small">Prepayments make gathering safer. Ghost favor may return gifts; ghost debt may cause overnight trouble.</p>`);}
 function graveyardGather(){const items=['Grave Soil','Bone Dust','Ghostcap','Spirit Thread']; addInv(items[Math.floor(Math.random()*items.length)]); let prepaid=state.prepaidGraves>0; if(prepaid){state.prepaidGraves--; state.ghostFavor++; log('Your prepaid offering glows. The graveyard allows the taking.'); if(Math.random()<.45)addInv(items[Math.floor(Math.random()*items.length)]);} else {state.graveRisk++; if(Math.random()<.35+state.graveRisk*.06){state.ghostDebt++; log('A ghost noticed you taking things. The Spirit Ledger records a debt.');}} state.time='Evening'; closeModal(); renderSide();}
 function offeringMenu(){show('Spirit Offering Plate',`<p>The stone altar hums softly beneath violet candles.</p><p><b>Favor:</b> ${state.ghostFavor} · <b>Debt:</b> ${state.ghostDebt} · <b>Prepaid gatherings:</b> ${state.prepaidGraves}</p><div class="choices"><button onclick="offerCoin()">Leave 3 coins as an offering</button><button onclick="offerIngredient('Bone Dust')">Offer Bone Dust</button><button onclick="offerIngredient('Grave Soil')">Offer Grave Soil</button><button class="secondary" onclick="prepayGrave()">Prepay your next graveyard gathering — 2 coins</button></div>`);}
