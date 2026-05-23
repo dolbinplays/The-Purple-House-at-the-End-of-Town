@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+<title>The Purple House at the End of Town - Playable Demo</title>
+<style>
+  :root{
+    --bg:#1f2530;--panel:#2b2034;--panel2:#3b2a47;--gold:#d9b465;--cream:#f5dfae;--purple:#8e55b7;--lav:#c897e4;--green:#72b66e;--poison:#88d05c;--danger:#b7537a;--ink:#231827;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;overflow:hidden;background:radial-gradient(circle at 50% 15%,#384050 0%,#1b2029 58%,#10141b 100%);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#fff;}
+  #wrap{height:100%;display:grid;grid-template-columns:minmax(0,1fr) 350px;gap:10px;padding:10px;}
+  #gameBox{position:relative;border:4px solid #17111b;border-radius:18px;overflow:hidden;background:#2a3940;box-shadow:0 16px 45px rgba(0,0,0,.45), inset 0 0 70px rgba(255,220,120,.08);}
+  canvas{width:100%;height:100%;display:block;image-rendering:auto;background:#24323b;}
+  #hud{position:absolute;left:12px;top:12px;display:flex;gap:8px;flex-wrap:wrap;pointer-events:none}
+  .pill{background:rgba(34,24,41,.88);border:2px solid rgba(217,180,101,.6);border-radius:999px;padding:6px 10px;font-weight:700;font-size:13px;box-shadow:0 4px 10px rgba(0,0,0,.25)}
+  #prompt{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);background:rgba(35,24,39,.92);border:2px solid var(--gold);border-radius:14px;padding:10px 14px;font-weight:800;display:none;box-shadow:0 8px 20px rgba(0,0,0,.35);text-align:center;max-width:90%;}
+  #side{border:4px solid #17111b;border-radius:18px;background:linear-gradient(180deg,#34233f,#211826);box-shadow:0 16px 45px rgba(0,0,0,.45);padding:12px;display:flex;flex-direction:column;min-height:0;}
+  h1{font-size:22px;line-height:1.05;margin:2px 0 6px;color:var(--cream);text-shadow:0 2px #000;font-family:Georgia,serif;}
+  h2{font-size:15px;margin:10px 0 6px;color:var(--gold);letter-spacing:.03em;text-transform:uppercase;}
+  p{font-size:14px;line-height:1.35;margin:6px 0;color:#f4e8c8}
+  button{cursor:pointer;border:2px solid #1a111c;background:linear-gradient(#f0c875,#bd8444);color:#251425;font-weight:900;border-radius:13px;padding:9px 10px;box-shadow:0 4px 0 #5f3b30;margin:4px 0;text-align:left;transition:.08s transform;}
+  button:hover{filter:brightness(1.06);transform:translateY(-1px)}
+  button:active{transform:translateY(2px);box-shadow:0 2px 0 #5f3b30}
+  button.secondary{background:linear-gradient(#a47ad3,#68418f);color:#fff;box-shadow:0 4px 0 #2b1d3a}
+  button.bad{background:linear-gradient(#e0899e,#9c3d63);color:#fff;box-shadow:0 4px 0 #4b1c30}
+  button.good{background:linear-gradient(#afe58d,#548e47);color:#182717;box-shadow:0 4px 0 #274523}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  #log{background:rgba(0,0,0,.2);border:2px solid rgba(217,180,101,.4);border-radius:14px;padding:8px;overflow:auto;min-height:110px;max-height:190px;font-size:13px;color:#f6e8c5;}
+  #log div{border-bottom:1px solid rgba(255,255,255,.08);padding:4px 0}.small{font-size:12px;color:#d6c9dc}.statgrid{display:grid;grid-template-columns:1fr 1fr;gap:5px}.stat{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:6px;font-size:13px}.bar{height:7px;background:#17111b;border-radius:8px;overflow:hidden;margin-top:4px}.fill{height:100%;background:linear-gradient(90deg,#d9b465,#eecf8b);width:50%}.modal{position:absolute;inset:0;background:rgba(13,10,17,.72);display:none;align-items:center;justify-content:center;padding:16px;z-index:10}.card{max-width:720px;width:min(720px,96%);max-height:92%;overflow:auto;background:linear-gradient(180deg,#493257,#2b2034);border:4px solid #17111b;border-radius:22px;padding:16px;box-shadow:0 18px 60px rgba(0,0,0,.65)}.card h2{font-size:22px;text-transform:none;margin-top:0}.choices{display:grid;gap:6px}.kbd{display:inline-block;background:#17111b;border:1px solid #6b5875;border-radius:7px;padding:1px 6px;font-size:12px;color:#fff}#mobile{position:absolute;right:14px;bottom:14px;display:none;grid-template-columns:48px 48px 48px;grid-template-rows:48px 48px 48px;gap:4px;opacity:.78}#mobile button{text-align:center;padding:0;margin:0;border-radius:14px}.wide{grid-column:1/4}.inv{display:flex;gap:6px;flex-wrap:wrap}.tag{font-size:12px;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.14);padding:5px 7px;border-radius:999px}@media(max-width:900px){#wrap{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) 310px}#mobile{display:grid}#side{overflow:auto}h1{font-size:18px}}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="gameBox">
+    <canvas id="c"></canvas>
+    <div id="hud"><div class="pill" id="dayPill">Day 1</div><div class="pill" id="timePill">Morning</div><div class="pill" id="coinPill">Coins 12</div></div>
+    <div id="prompt"></div>
+    <div id="mobile"><button class="secondary" data-dir="up">▲</button><button class="secondary" data-dir="left">◀</button><button class="secondary" data-dir="down">▼</button><button class="secondary" data-dir="right">▶</button><button class="wide" id="actBtn">Interact</button></div>
+    <div id="modal" class="modal"><div class="card" id="modalCard"></div></div>
+  </div>
+  <aside id="side">
+    <h1>The Purple House<br>at the End of Town</h1>
+    <p class="small">Playable prototype: walk, gather ingredients, choose a familiar, brew, serve villagers, upgrade the shop, and shape your witch’s reputation.</p>
+    <h2>Controls</h2>
+    <p><span class="kbd">WASD</span>/<span class="kbd">Arrows</span> move · <span class="kbd">E</span> interact · <span class="kbd">Esc</span> close</p>
+    <h2>Familiar</h2><div id="famBox" class="small">Choose one at the Familiar Nook.</div>
+    <h2>Inventory</h2><div id="inv" class="inv"></div>
+    <h2>Witch Tendencies</h2><div class="statgrid" id="stats"></div>
+    <h2>House Upgrades</h2><div id="upgrades" class="small"></div>
+    <h2>Story Log</h2><div id="log"></div>
+  </aside>
+</div>
+<script>
+const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');
+const promptEl=document.getElementById('prompt'),modal=document.getElementById('modal'),modalCard=document.getElementById('modalCard');
+let W=900,H=650,keys={},near=null,frame=0;
+const state={day:1,time:'Morning',coins:12,familiar:null,inventory:{Sunmint:2,Thornroot:1},stats:{Kindness:0,Power:0,Balance:0,Greed:0,Mischief:0},upgrades:{Shop:false,Attic:false,Greenhouse:false,Basement:false},servedToday:false,questIndex:0,graveRisk:0};
+const witch={x:420,y:410,vx:0,vy:0,dir:1};
+const logs=[];
+const quests=[
+ {name:'Mara the Baker',ask:'Mara wants a potion that will make everyone love her bread.',truth:'Her oven was hexed by jealousy, but she is tempted by shortcut magic.',good:'Brew a Hearth-Mending Tonic and fix the oven.',evil:'Enchant the village into craving her bread.',gray:'Sell her a mild one-week popularity charm.',mischief:'Make the bread sing compliments until people buy it.'},
+ {name:'Old Bram',ask:'Bram asks you to curse the foxes stealing from his henhouse.',truth:'The foxes are feeding kits in the graveyard wall.',good:'Brew a ward that keeps foxes out without harming them.',evil:'Mark the foxes with a fear hex.',gray:'Trade him a fox-proof charm for fresh eggs each week.',mischief:'Teach the hens to chase foxes in tiny helmets.'},
+ {name:'Lina the Tailor',ask:'Lina wants a rival to forget the design she copied.',truth:'Both tailors stole from the same ghost’s burial gown.',good:'Help return the pattern to the ghost and inspire new work.',evil:'Bottle the rival’s memory and sell it back later.',gray:'Erase only the stolen detail and collect a favor.',mischief:'Make every copied dress sprout tiny judgmental sleeves.'},
+ {name:'Mayor Puddlewick',ask:'The mayor wants your help making the town less afraid of your shop.',truth:'He also wants to control which villagers may visit you.',good:'Host a free remedy day.',evil:'Make him publicly praise you with a silver-tongue spell.',gray:'Accept his proposal but keep a secret back door for desperate villagers.',mischief:'Make the town notice you by painting the moon purple for one night.'}
+];
+const spots=[
+ {id:'shop',x:432,y:275,r:75,label:'Potion Shop Door',hint:'Open the shop for today’s villager request'},
+ {id:'cauldron',x:290,y:408,r:55,label:'Cauldron',hint:'Brew a potion from gathered ingredients'},
+ {id:'familiar',x:560,y:392,r:55,label:'Familiar Nook',hint:'Choose or visit your familiar'},
+ {id:'helpGarden',x:700,y:250,r:85,label:'Helpful Garden',hint:'Gather kind and protective herbs'},
+ {id:'poisonGarden',x:745,y:470,r:85,label:'Poison Garden',hint:'Gather dangerous ingredients'},
+ {id:'graveyard',x:170,y:220,r:92,label:'Graveyard Gate',hint:'Gather eerie graveyard ingredients'},
+ {id:'upgrade',x:535,y:190,r:50,label:'Upgrade Board',hint:'Customize and unlock parts of the purple house'},
+ {id:'bed',x:435,y:525,r:60,label:'Bed',hint:'End the day and see what tomorrow brings'}
+];
+function log(t){logs.unshift(t);logs.splice(7);renderSide();}
+function resize(){const box=document.getElementById('gameBox').getBoundingClientRect();canvas.width=Math.floor(box.width*devicePixelRatio);canvas.height=Math.floor(box.height*devicePixelRatio);ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);W=box.width;H=box.height;}
+window.addEventListener('resize',resize);resize();
+function sx(x){return x/900*W} function sy(y){return y/650*H} function sc(){return Math.min(W/900,H/650)}
+function roundRect(x,y,w,h,r,fill,stroke){ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fillStyle=fill;ctx.fill(); if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=3*sc();ctx.stroke();}}
+function drawHouse(){let s=sc();
+  // hill/base
+  ctx.fillStyle='#4b3b35';ctx.beginPath();ctx.ellipse(sx(450),sy(595),sx(335),sy(45),0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#5f8e57';ctx.beginPath();ctx.ellipse(sx(450),sy(570),sx(310),sy(52),0,0,Math.PI*2);ctx.fill();
+  // purple body crooked
+  ctx.save();ctx.translate(sx(430),sy(300));ctx.rotate(-0.025);ctx.translate(-sx(430),-sy(300));
+  roundRect(sx(270),sy(190),sx(315),sy(270),18*s,'#8b55ad','#58306c');
+  roundRect(sx(305),sy(300),sx(235),sy(178),14*s,'#a36bc0','#5d356f');
+  // awning
+  ctx.fillStyle='#efd179';ctx.beginPath();ctx.moveTo(sx(285),sy(365));ctx.lineTo(sx(565),sy(365));ctx.lineTo(sx(540),sy(425));ctx.lineTo(sx(315),sy(425));ctx.closePath();ctx.fill();
+  for(let i=0;i<6;i++){ctx.fillStyle=i%2?'#e2b65e':'#f7e2a5';ctx.beginPath();ctx.moveTo(sx(295+i*43),sy(365));ctx.lineTo(sx(333+i*43),sy(365));ctx.lineTo(sx(325+i*38),sy(424));ctx.lineTo(sx(305+i*38),sy(424));ctx.closePath();ctx.fill();}
+  // roof
+  ctx.fillStyle='#4b2b65';ctx.beginPath();ctx.moveTo(sx(245),sy(195));ctx.quadraticCurveTo(sx(385),sy(55),sx(610),sy(170));ctx.lineTo(sx(585),sy(225));ctx.quadraticCurveTo(sx(400),sy(145),sx(270),sy(235));ctx.closePath();ctx.fill();ctx.strokeStyle='#7e4d94';ctx.lineWidth=8*s;ctx.stroke();
+  ctx.fillStyle='#2f2649';ctx.beginPath();ctx.moveTo(sx(275),sy(176));ctx.quadraticCurveTo(sx(362),sy(82),sx(470),sy(125));ctx.quadraticCurveTo(sx(395),sy(130),sx(310),sy(218));ctx.closePath();ctx.fill();
+  // trim
+  ctx.strokeStyle='#d8b05a';ctx.lineWidth=12*s;ctx.beginPath();ctx.moveTo(sx(245),sy(356));ctx.lineTo(sx(590),sy(355));ctx.stroke();
+  ctx.lineWidth=7*s;ctx.beginPath();ctx.moveTo(sx(288),sy(288));ctx.lineTo(sx(555),sy(292));ctx.stroke();
+  // windows
+  function win(x,y,w,h){roundRect(sx(x),sy(y),sx(w),sy(h),6*s,'#2d2746','#d1ad5e');ctx.strokeStyle='#d1ad5e';ctx.lineWidth=4*s;ctx.beginPath();ctx.moveTo(sx(x+w/2),sy(y));ctx.lineTo(sx(x+w/2),sy(y+h));ctx.moveTo(sx(x),sy(y+h/2));ctx.lineTo(sx(x+w),sy(y+h/2));ctx.stroke();ctx.fillStyle='rgba(255,230,118,.28)';ctx.fillRect(sx(x+5),sy(y+5),sx(w-10),sy(h-10));}
+  win(350,305,48,70); win(475,305,48,70); win(440,205,50,55); win(286,275,42,55);
+  // door
+  roundRect(sx(420),sy(410),sx(58),sy(84),12*s,'#9b5c45','#d1ad5e');ctx.fillStyle='#2b1c2e';ctx.fillRect(sx(430),sy(427),sx(34),sy(30));ctx.fillStyle='#f0d27a';ctx.beginPath();ctx.arc(sx(466),sy(454),4*s,0,Math.PI*2);ctx.fill();
+  // chimney/attic
+  roundRect(sx(545),sy(84),sx(43),sy(64),8*s,'#b38d75','#7e584e');
+  if(state.upgrades.Attic){ctx.fillStyle='rgba(187,123,255,.7)';ctx.beginPath();ctx.arc(sx(466),sy(230),22*s,0,Math.PI*2);ctx.fill();}
+  if(state.upgrades.Greenhouse){roundRect(sx(585),sy(315),sx(78),sy(105),12*s,'rgba(130,210,150,.35)','#9fdc9d');ctx.strokeStyle='#9fdc9d';ctx.beginPath();ctx.moveTo(sx(623),sy(315));ctx.lineTo(sx(623),sy(420));ctx.moveTo(sx(585),sy(365));ctx.lineTo(sx(663),sy(365));ctx.stroke();}
+  if(state.upgrades.Basement){ctx.fillStyle='rgba(85,35,110,.75)';ctx.beginPath();ctx.ellipse(sx(448),sy(502),sx(90),sy(18),0,0,Math.PI*2);ctx.fill();}
+  ctx.restore();
+  // lamp
+  ctx.strokeStyle='#947a68';ctx.lineWidth=7*s;ctx.beginPath();ctx.moveTo(sx(230),sy(505));ctx.bezierCurveTo(sx(226),sy(390),sx(255),sy(325),sx(305),sy(323));ctx.stroke();ctx.fillStyle='#ffe675';ctx.shadowColor='#ffe675';ctx.shadowBlur=18*s;ctx.beginPath();ctx.arc(sx(305),sy(337),15*s,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;
+}
+function drawWorld(){let s=sc();
+ ctx.clearRect(0,0,W,H);ctx.fillStyle='#283743';ctx.fillRect(0,0,W,H);
+ // paths
+ ctx.fillStyle='#66534c';ctx.beginPath();ctx.ellipse(sx(440),sy(510),sx(80),sy(35),0,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.moveTo(sx(432),sy(520));ctx.quadraticCurveTo(sx(420),sy(585),sx(420),sy(650));ctx.lineTo(sx(500),sy(650));ctx.quadraticCurveTo(sx(490),sy(585),sx(468),sy(520));ctx.fill();
+ // graveyard
+ ctx.fillStyle='#334047';ctx.beginPath();ctx.ellipse(sx(155),sy(200),sx(130),sy(92),-.2,0,Math.PI*2);ctx.fill();
+ for(let i=0;i<6;i++){let x=70+i*34,y=160+(i%2)*28;roundRect(sx(x),sy(y),sx(26),sy(42),8*s,'#7d7f88','#4a4c55');}
+ ctx.fillStyle='rgba(164,225,214,.6)';for(let i=0;i<10;i++){ctx.beginPath();ctx.arc(sx(72+i*18),sy(232+(i%3)*9),3*s,0,6.28);ctx.fill();}
+ // gardens
+ function garden(cx,cy,w,h,type){roundRect(sx(cx-w/2),sy(cy-h/2),sx(w),sy(h),18*s,type==='help'?'#456e3f':'#493046','#2b1b2e');for(let i=0;i<16;i++){let x=cx-w/2+20+(i%4)*35,y=cy-h/2+20+Math.floor(i/4)*22;ctx.fillStyle=type==='help'?['#87d674','#e8d873','#75c7a0'][i%3]:['#93d65e','#b04b8d','#5da05b'][i%3];ctx.beginPath();ctx.ellipse(sx(x),sy(y),sx(8),sy(14),i,0,6.28);ctx.fill();}}
+ garden(710,250,145,120,'help'); garden(745,470,150,125,'poison');
+ drawHouse();
+ // interaction glows
+ spots.forEach(sp=>{ctx.beginPath();ctx.strokeStyle= near&&near.id===sp.id?'rgba(255,226,120,.75)':'rgba(255,255,255,.07)';ctx.lineWidth=(near&&near.id===sp.id?3:1)*s;ctx.arc(sx(sp.x),sy(sp.y),sx(sp.r),0,6.28);ctx.stroke();});
+}
+function drawChar(){let s=sc(),bob=Math.sin(frame*.16)*5*s,wx=sx(witch.x),wy=sy(witch.y)+bob;
+ // familiar following
+ if(state.familiar){let fx=sx(witch.x-45*witch.dir),fy=sy(witch.y+22)+Math.sin(frame*.2+1)*4*s;ctx.fillStyle=state.familiar.color;ctx.beginPath();ctx.ellipse(fx,fy,13*s,10*s,0,0,6.28);ctx.fill();ctx.fillStyle='#fff6b3';ctx.beginPath();ctx.arc(fx+5*s,fy-3*s,2*s,0,6.28);ctx.fill(); if(state.familiar.name==='Raven'){ctx.fillStyle='#15151e';ctx.beginPath();ctx.moveTo(fx+12*s,fy);ctx.lineTo(fx+25*s,fy-5*s);ctx.lineTo(fx+13*s,fy+5*s);ctx.fill();}}
+ // shadow
+ ctx.fillStyle='rgba(0,0,0,.28)';ctx.beginPath();ctx.ellipse(wx,sy(witch.y+34),20*s,9*s,0,0,6.28);ctx.fill();
+ // witch body
+ ctx.fillStyle='#55305f';ctx.beginPath();ctx.moveTo(wx,wy-35*s);ctx.lineTo(wx-24*s,wy+30*s);ctx.lineTo(wx+24*s,wy+30*s);ctx.closePath();ctx.fill();ctx.strokeStyle='#d9b465';ctx.lineWidth=3*s;ctx.stroke();
+ ctx.fillStyle='#cfa46a';ctx.beginPath();ctx.arc(wx,wy-45*s,13*s,0,6.28);ctx.fill();
+ ctx.fillStyle='#332041';ctx.beginPath();ctx.moveTo(wx-32*s,wy-54*s);ctx.quadraticCurveTo(wx,wy-94*s,wx+32*s,wy-54*s);ctx.lineTo(wx+12*s,wy-58*s);ctx.lineTo(wx,wy-102*s);ctx.lineTo(wx-12*s,wy-58*s);ctx.closePath();ctx.fill();ctx.strokeStyle='#8d5db0';ctx.stroke();
+ ctx.fillStyle='#f3d36d';ctx.fillRect(wx-18*s,wy-57*s,36*s,5*s);
+ // feet bounce
+ ctx.strokeStyle='#251425';ctx.lineWidth=4*s;ctx.beginPath();ctx.moveTo(wx-10*s,wy+29*s);ctx.lineTo(wx-18*s,wy+39*s+Math.sin(frame*.22)*4*s);ctx.moveTo(wx+10*s,wy+29*s);ctx.lineTo(wx+18*s,wy+39*s-Math.sin(frame*.22)*4*s);ctx.stroke();
+}
+function update(){frame++;let ax=0,ay=0;if(keys.ArrowLeft||keys.a)ax--;if(keys.ArrowRight||keys.d)ax++;if(keys.ArrowUp||keys.w)ay--;if(keys.ArrowDown||keys.s)ay++;let len=Math.hypot(ax,ay)||1;witch.vx+=(ax/len)*.75;witch.vy+=(ay/len)*.75;witch.vx*=.78;witch.vy*=.78;witch.x=Math.max(40,Math.min(860,witch.x+witch.vx));witch.y=Math.max(110,Math.min(600,witch.y+witch.vy));if(Math.abs(witch.vx)>.1)witch.dir=witch.vx>0?1:-1;near=null;let best=9999;for(const sp of spots){let d=Math.hypot(witch.x-sp.x,witch.y-sp.y);if(d<sp.r&&d<best){best=d;near=sp;}} if(near){promptEl.style.display='block';promptEl.textContent=`E: ${near.label} — ${near.hint}`;}else promptEl.style.display='none';drawWorld();drawChar();requestAnimationFrame(update)}
+function closeModal(){modal.style.display='none';}
+function show(title,html){modalCard.innerHTML=`<h2>${title}</h2>${html}<button class="secondary" onclick="closeModal()">Close</button>`;modal.style.display='flex';}
+function addInv(name,n=1){state.inventory[name]=(state.inventory[name]||0)+n;log(`Gathered ${n} ${name}.`);renderSide();}
+function consume(list){for(const k of list){if((state.inventory[k]||0)<=0)return false;}list.forEach(k=>state.inventory[k]--);return true;}
+function interact(){if(!near)return; const id=near.id;
+ if(id==='helpGarden'){const items=['Sunmint','Lantern Moss','Dewberries','Moon Chamomile'];addInv(items[Math.floor(Math.random()*items.length)]);state.time='Afternoon';}
+ if(id==='poisonGarden'){const items=['Thornroot','Nightshade Bells','Widowcap','Whisper Mold'];addInv(items[Math.floor(Math.random()*items.length)]);state.stats.Power+=1;state.time='Afternoon';}
+ if(id==='graveyard'){const items=['Grave Soil','Bone Dust','Ghostcap','Spirit Thread'];addInv(items[Math.floor(Math.random()*items.length)]);state.graveRisk++;if(Math.random()<.25+state.graveRisk*.05){log('A ghost noticed you taking things. It may ask for payment later.');state.stats.Balance+=1;}state.time='Evening';}
+ if(id==='familiar') familiarMenu();
+ if(id==='cauldron') brewMenu();
+ if(id==='shop') questMenu();
+ if(id==='upgrade') upgradeMenu();
+ if(id==='bed') endDay();
+ renderSide();}
+function familiarMenu(){const fams=[{name:'Black Cat',bonus:'Detects lies and softens suspicious villagers.',color:'#16151d'},{name:'Raven',bonus:'Finds secrets, omens, and graveyard clues.',color:'#111827'},{name:'Toad',bonus:'Improves brewing and occasionally saves ingredients.',color:'#5f9b62'},{name:'Bat',bonus:'Helps with night gathering and ghosts.',color:'#3b2b4f'},{name:'Fox',bonus:'Unlocks clever mischief and gray solutions.',color:'#c06a36'}];
+ show('Choose Your Familiar',`<p>Your familiar follows with the same cheerful bounce as the witch and gives a small passive bonus.</p><div class="choices">${fams.map(f=>`<button onclick='state.familiar=${JSON.stringify(f)};log("${f.name} chose you as much as you chose them.");closeModal();renderSide();'>${f.name}<br><span class="small">${f.bonus}</span></button>`).join('')}</div>`);}
+function brewMenu(){show('Cauldron',`<p>The cauldron burbles. For this demo, brew simple potions from ingredients you gather.</p><div class="choices">
+<button class="good" onclick="brew('Kind Remedy',['Sunmint','Lantern Moss'],'Kindness')">Kind Remedy — Sunmint + Lantern Moss</button>
+<button class="bad" onclick="brew('Minor Hex',['Thornroot','Grave Soil'],'Power')">Minor Hex — Thornroot + Grave Soil</button>
+<button onclick="brew('Balanced Charm',['Dewberries','Spirit Thread'],'Balance')">Balanced Charm — Dewberries + Spirit Thread</button>
+<button onclick="brew('Trickster Tonic',['Whisper Mold','Moon Chamomile'],'Mischief')">Trickster Tonic — Whisper Mold + Moon Chamomile</button>
+</div><p class="small">Tip: You can also resolve customer requests directly with story choices, but brewed potions give extra coins.</p>`);}
+function brew(name,ings,stat){if(consume(ings)){state.inventory[name]=(state.inventory[name]||0)+1;state.stats[stat]+=2;state.coins+=2;log(`Brewed ${name}. The shop smells like ${stat.toLowerCase()}.`);closeModal();}else alert('Missing ingredients: '+ings.join(' + '));renderSide();}
+function questMenu(){if(state.servedToday){show('Potion Shop',`<p>You already handled today’s visitor. End the day to invite tomorrow’s trouble.</p>`);return;} let q=quests[state.questIndex%quests.length];
+ show(q.name,`<p><b>${q.ask}</b></p><p class="small">Hidden truth: ${q.truth}</p><div class="choices">
+<button class="good" onclick="resolveQuest('good')">Good Witch: ${q.good}</button>
+<button class="bad" onclick="resolveQuest('evil')">Dark Witch: ${q.evil}</button>
+<button onclick="resolveQuest('gray')">Gray Witch: ${q.gray}</button>
+<button class="secondary" onclick="resolveQuest('mischief')">Mischief Witch: ${q.mischief}</button>
+</div>`);}
+function resolveQuest(type){let q=quests[state.questIndex%quests.length];state.servedToday=true;state.questIndex++;state.time='Night';let coin=8; if(type==='good'){state.stats.Kindness+=3;coin=6;log(`${q.name} left grateful, not merely satisfied.`)} if(type==='evil'){state.stats.Power+=3;coin=10;log(`${q.name} left with what they asked for. The village may regret it.`)} if(type==='gray'){state.stats.Balance+=3;state.stats.Greed+=1;coin=9;log(`${q.name} signed a tidy little favor contract.`)} if(type==='mischief'){state.stats.Mischief+=3;coin=7;log(`${q.name}'s problem is solved in the strangest possible way.`)}state.coins+=coin;closeModal();renderSide();}
+function upgradeMenu(){const opts=[['Shop',18,'More shelves, more customers, and a warmer shopfront.'],['Attic',22,'Unlocks divination, dream magic, and secret consequences.'],['Greenhouse',25,'Improves helpful garden yields and rare herbs.'],['Basement',30,'Forbidden rituals, bottled secrets, and dangerous choices.']];
+ show('House Customization & Unlocks',`<p>The purple house changes as you invest in it. Future versions will also make it visually reflect your moral path.</p><div class="choices">${opts.map(o=>`<button onclick="buyUpgrade('${o[0]}',${o[1]})">${state.upgrades[o[0]]?'✓ ':''}${o[0]} — ${o[1]} coins<br><span class="small">${o[2]}</span></button>`).join('')}</div>`);}
+function buyUpgrade(name,cost){if(state.upgrades[name]){alert('Already unlocked.');return;}if(state.coins<cost){alert('Not enough coins.');return;}state.coins-=cost;state.upgrades[name]=true;log(`Unlocked the ${name}. The purple house creaked happily.`);closeModal();renderSide();}
+function endDay(){let top=Object.entries(state.stats).sort((a,b)=>b[1]-a[1])[0];state.day++;state.time='Morning';state.servedToday=false;state.graveRisk=Math.max(0,state.graveRisk-1);state.inventory.Sunmint=(state.inventory.Sunmint||0)+1;state.inventory.Thornroot=(state.inventory.Thornroot||0)+1;log(`Day ${state.day} begins. The village whispers most about your ${top[0].toLowerCase()}.`);renderSide();}
+function renderSide(){document.getElementById('dayPill').textContent='Day '+state.day;document.getElementById('timePill').textContent=state.time;document.getElementById('coinPill').textContent='Coins '+state.coins;document.getElementById('famBox').innerHTML=state.familiar?`<b>${state.familiar.name}</b><br>${state.familiar.bonus}`:'Choose one at the Familiar Nook.';document.getElementById('inv').innerHTML=Object.entries(state.inventory).filter(([k,v])=>v>0).map(([k,v])=>`<span class="tag">${k} ×${v}</span>`).join('')||'<span class="small">Empty</span>';let max=Math.max(5,...Object.values(state.stats));document.getElementById('stats').innerHTML=Object.entries(state.stats).map(([k,v])=>`<div class="stat"><b>${k}</b>: ${v}<div class="bar"><div class="fill" style="width:${Math.min(100,v/max*100)}%"></div></div></div>`).join('');document.getElementById('upgrades').innerHTML=Object.entries(state.upgrades).map(([k,v])=>`${v?'✓':'○'} ${k}`).join('<br>');document.getElementById('log').innerHTML=logs.map(l=>`<div>${l}</div>`).join('')||'<div>Arrive at the crooked purple house. The village is already whispering.</div>';}
+window.addEventListener('keydown',e=>{keys[e.key]=true;if(e.key.toLowerCase()==='e')interact();if(e.key==='Escape')closeModal();});window.addEventListener('keyup',e=>keys[e.key]=false);
+document.getElementById('actBtn').onclick=interact;document.querySelectorAll('[data-dir]').forEach(b=>{let d=b.dataset.dir;b.onpointerdown=()=>{keys[{up:'ArrowUp',down:'ArrowDown',left:'ArrowLeft',right:'ArrowRight'}[d]]=true};b.onpointerup=b.onpointerleave=()=>{keys[{up:'ArrowUp',down:'ArrowDown',left:'ArrowLeft',right:'ArrowRight'}[d]]=false};});
+log('You inherited the purple house at the end of town. It smells like rain, candlewax, and decisions.');renderSide();update();
+</script>
+</body>
+</html>
