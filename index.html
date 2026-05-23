@@ -308,9 +308,11 @@ function drawWitch(){
   const blink=(frame%205)>197 || (!moving && frame%360>350);
   const headLook=(!moving&&idleMode==='look')?Math.sin(idleClock*.09)*sw(3.5):0;
   const armSwing=moving?stepA*.22:Math.sin(frame*.04)*0.025;
+  const avatarScale=.78;
   ctx.save();
-  ctx.fillStyle='rgba(0,0,0,.25)'; ctx.beginPath(); ctx.ellipse(x,y+sw(22),sw(28),sw(10),0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='rgba(0,0,0,.25)'; ctx.beginPath(); ctx.ellipse(x,y+sw(22)*avatarScale,sw(28)*avatarScale,sw(10)*avatarScale,0,0,Math.PI*2); ctx.fill();
   ctx.translate(x,y);
+  ctx.scale(avatarScale,avatarScale);
   spriteStroke();
 
   function drawLegs(widthScale=1){
