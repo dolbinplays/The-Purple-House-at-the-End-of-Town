@@ -69,6 +69,51 @@ button:disabled{opacity:.52;filter:grayscale(.4);cursor:not-allowed}
 .journalEntry.isNew{border-color:rgba(238,207,139,.62);box-shadow:0 0 0 1px rgba(238,207,139,.16) inset}
 .journalEntry:last-child{margin-bottom:0}.journalMeta{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:5px}.journalBadge{font-size:11px;background:rgba(217,180,101,.18);border:1px solid rgba(217,180,101,.34);color:#ffe7a6;border-radius:999px;padding:2px 7px}.journalNewBadge{background:#eecf8b;color:#251425;border-color:#ffe7a6;font-weight:1000}.journalCutscene{font-size:11px;color:#d6c9dc}.journalText{font-size:14px;line-height:1.38;color:#f7ebcf}.journalEmpty{padding:20px;text-align:center;color:#d6c9dc}.journalTools{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.journalTools button{font-size:12px;padding:7px 9px}.storyPreview{max-height:165px;overflow:auto;background:rgba(0,0,0,.16);border:1px solid rgba(255,255,255,.11);border-radius:12px;padding:7px;margin-top:6px}.storyPreview div{border-bottom:1px solid rgba(255,255,255,.08);padding:4px 0;font-size:12px}
 @media(max-width:980px){.journalHero{grid-template-columns:1fr}.journalList{max-height:46vh}}
+
+/* Witch Model Debug Viewer: dev-only sprite/model inspection panel. */
+.witchDebugViewer{
+  position:absolute;
+  left:16px;
+  bottom:16px;
+  width:300px;
+  height:350px;
+  background:#fff;
+  color:#1b1020;
+  border:2px solid #1b1020;
+  border-radius:12px;
+  z-index:7;
+  box-shadow:0 12px 30px rgba(0,0,0,.45);
+  display:none;
+  padding:8px;
+  pointer-events:none;
+}
+.witchDebugViewer.open{display:block}
+.witchDebugViewer h3{
+  margin:0 0 6px;
+  font-size:13px;
+  line-height:1.1;
+  color:#1b1020;
+  font-family:Georgia,serif;
+}
+#witchDebugCanvas{
+  display:block;
+  width:280px;
+  height:280px;
+  background:#fff;
+  border:1px solid rgba(0,0,0,.22);
+  border-radius:8px;
+}
+#witchDebugStatus{
+  margin-top:5px;
+  font:11px/1.2 ui-monospace,SFMono-Regular,Consolas,monospace;
+  color:#1b1020;
+  white-space:pre-wrap;
+}
+#witchDebugBtn.debugOn{
+  outline:2px solid rgba(255,255,255,.72);
+  filter:brightness(1.16);
+}
+
 </style>
 </head>
 <body>
@@ -76,7 +121,7 @@ button:disabled{opacity:.52;filter:grayscale(.4);cursor:not-allowed}
   <div id="gameBox">
     <canvas id="c"></canvas>
     <div id="hud">
-      <div class="pill" id="versionPill">v0.26.06.16.1352 - Stable Witch Model and Walk Speed Fix</div>
+      <div class="pill" id="versionPill">v0.26.06.16.1447 - Witch Debug Viewer</div>
       <div class="pill" id="dayPill">Day 1</div>
       <div class="pill" id="timePill">Morning</div>
       <div class="pill" id="coinPill">Coins 12</div>
@@ -84,6 +129,12 @@ button:disabled{opacity:.52;filter:grayscale(.4);cursor:not-allowed}
     <div class="floatBtns">
       <button id="rumorBtn" class="secondary journalLauncher" onclick="showRumors()">Rumor Board</button>
       <button id="journalBtn" class="secondary journalLauncher" onclick="villageNotesMenu()">Journal</button>
+      <button id="witchDebugBtn" class="secondary" onclick="toggleWitchDebugViewer()">Witch Debug</button>
+    </div>
+    <div id="witchDebugViewer" class="witchDebugViewer" aria-live="off">
+      <h3>Witch Model Debug View</h3>
+      <canvas id="witchDebugCanvas" width="280" height="280"></canvas>
+      <div id="witchDebugStatus">closed</div>
     </div>
     <div id="prompt"></div>
     <div class="bottomPanel">
@@ -107,7 +158,7 @@ button:disabled{opacity:.52;filter:grayscale(.4);cursor:not-allowed}
   </div>
   <aside id="side">
     <h1>The Purple House<br>at the End of Town</h1>
-    <p class="small">v0.26.06.16.1352 - Stable Witch Model and Walk Speed Fix. Stable cached witch model with coherent assembled sprite rendering, reduced paper-doll drift, slower cozy movement speed, and simpler whole-body walk motion.</p>
+    <p class="small">v0.26.06.16.1447 - Witch Debug Viewer. Adds a toggleable lower-left Witch Model Debug Viewer with a large white-background live close-up of the current assembled witch model and animation state.</p>
     <h2>Audio</h2><div id="audioControls">
   <button class="secondary sectionButton" id="audioToggle" onclick="toggleAudio()">Enable All Audio</button>
   <div class="audioRow">
@@ -132,13 +183,16 @@ button:disabled{opacity:.52;filter:grayscale(.4);cursor:not-allowed}
   </aside>
 </div>
 <script>
-const BUILD_VERSION='v0.26.06.16.1352';
-const BUILD_SUMMARY='Stable Witch Model and Walk Speed Fix';
+const BUILD_VERSION='v0.26.06.16.1447';
+const BUILD_SUMMARY='Witch Debug Viewer';
 const BUILD_LABEL=BUILD_VERSION+' - '+BUILD_SUMMARY;
 const SAVE_KEY='purpleHouse_'+BUILD_VERSION;
 const WORLD_W=1672, WORLD_H=941;
 const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');
 const promptEl=document.getElementById('prompt'),modal=document.getElementById('modal'),modalCard=document.getElementById('modalCard');
+const witchDebugViewer=document.getElementById('witchDebugViewer'),witchDebugCanvas=document.getElementById('witchDebugCanvas'),witchDebugStatus=document.getElementById('witchDebugStatus'),witchDebugBtn=document.getElementById('witchDebugBtn');
+const witchDebugCtx=witchDebugCanvas?witchDebugCanvas.getContext('2d'):null;
+let witchDebugOpen=false;
 let W=900,H=650,keys={},near=null,frame=0,sceneScale=1,sceneX=0,sceneY=0;
 
 const MUSIC_TRACKS=[
@@ -391,6 +445,69 @@ function drawModularWitch(){
   ctx.restore();
   return true;
 }
+
+// Witch Model Debug Viewer ---------------------------------------------------
+// Toggleable dev panel for inspecting the cached witch model at a large size.
+// It renders only when open and does not affect gameplay, input, or saves.
+function toggleWitchDebugViewer(){
+  witchDebugOpen=!witchDebugOpen;
+  if(witchDebugViewer)witchDebugViewer.classList.toggle('open',witchDebugOpen);
+  if(witchDebugBtn)witchDebugBtn.classList.toggle('debugOn',witchDebugOpen);
+  if(witchDebugOpen)renderWitchDebugViewer();
+}
+function renderWitchDebugViewer(){
+  if(!witchDebugOpen||!witchDebugCtx||!witchDebugCanvas)return;
+  const g=witchDebugCtx;
+  const cw=witchDebugCanvas.width,ch=witchDebugCanvas.height;
+  g.save();
+  g.setTransform(1,0,0,1,0,0);
+  g.clearRect(0,0,cw,ch);
+  g.fillStyle='#ffffff';
+  g.fillRect(0,0,cw,ch);
+
+  const moving=witch.moving;
+  const step=witch.step||0;
+  const blink=(!moving && (frame%330)>323) || (moving && (frame%520)>516);
+  const sprite=buildStableWitchComposite(blink) || buildStableWitchComposite(false);
+  const stepA=Math.sin(step);
+  const debugBob=moving?Math.abs(stepA)*2.0:Math.sin(frame*.045)*0.9;
+  const sideDir=(witch.facing==='left')?-1:(witch.facing==='right'?1:0);
+  const lean=moving?sideDir*.010:0;
+
+  if(sprite){
+    // Approx. 2x gameplay-scale close-up with large white-background padding.
+    const drawW=176,drawH=208;
+    const cx=cw/2, groundY=242+debugBob;
+    g.save();
+    g.translate(cx,groundY);
+    g.rotate(lean);
+    g.drawImage(sprite,-drawW/2,-drawH+20,drawW,drawH);
+    g.restore();
+
+    // Baseline and centerline help screenshots reveal foot sliding/grounding.
+    g.strokeStyle='rgba(0,0,0,.18)';
+    g.lineWidth=1;
+    g.beginPath();
+    g.moveTo(22,groundY+1);
+    g.lineTo(cw-22,groundY+1);
+    g.moveTo(cx,16);
+    g.lineTo(cx,ch-16);
+    g.stroke();
+  }else{
+    g.fillStyle='#1b1020';
+    g.font='14px system-ui,sans-serif';
+    g.textAlign='center';
+    g.fillText('Witch sprite assets not ready',cw/2,ch/2);
+  }
+  g.restore();
+
+  if(witchDebugStatus){
+    witchDebugStatus.textContent=
+      `facing: ${witch.facing||'down'}   moving: ${witch.moving?'true':'false'}\n`+
+      `speed: ${witch.speed.toFixed(3)}   step: ${(witch.step||0).toFixed(2)}   frame: ${frame}`;
+  }
+}
+
 function drawWitch(){
   if(MODULAR_WITCH_ENABLED && drawModularWitch())return;
   const moving=witch.moving;
@@ -784,7 +901,7 @@ function update(){
   for(const sp of spots){let d=Math.hypot(witch.x-sp.x,witch.y-sp.y); if(d<sp.r && d<best){best=d; near=sp;}}
   if(near){promptEl.style.display='block'; promptEl.textContent=`E: ${near.label} — ${near.hint}`;} else promptEl.style.display='none';
   maybeFootstep();
-  drawWorld(); requestAnimationFrame(update);
+  drawWorld(); renderWitchDebugViewer(); requestAnimationFrame(update);
 }
 function interact(){if(!near)return; const id=near.id; if(id==='house')houseMenu(); if(id==='familiar')familiarMenu(); if(id==='helpGarden')helpGardenGather(); if(id==='poisonGarden')poisonGardenGather(); if(id==='graveyard')graveyardMenu(); if(id==='paths')exploreMenu(); if(id==='well')wellMenu(); renderSide();}
 function helpGardenGather(){playSfx('gather');const items=['Sunmint','Lantern Moss','Dewberries','Moon Chamomile']; addInv(items[Math.floor(Math.random()*items.length)],state.upgrades.Greenhouse?2:1); state.time='Afternoon';}
