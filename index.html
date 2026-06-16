@@ -76,7 +76,7 @@ button:disabled{opacity:.52;filter:grayscale(.4);cursor:not-allowed}
   <div id="gameBox">
     <canvas id="c"></canvas>
     <div id="hud">
-      <div class="pill" id="versionPill">v0.26.06.16.1124 - Modular Witch Direction and Blink Polish</div>
+      <div class="pill" id="versionPill">v0.26.06.16.1236 - Modular Witch Compact Rig Fix</div>
       <div class="pill" id="dayPill">Day 1</div>
       <div class="pill" id="timePill">Morning</div>
       <div class="pill" id="coinPill">Coins 12</div>
@@ -107,7 +107,7 @@ button:disabled{opacity:.52;filter:grayscale(.4);cursor:not-allowed}
   </div>
   <aside id="side">
     <h1>The Purple House<br>at the End of Town</h1>
-    <p class="small">v0.26.06.16.1124 - Modular Witch Direction and Blink Polish. Direction consistency and blink polish for the modular witch avatar: modular sprite remains active in all movement directions, with subtle direction cues, eyelid-overlay blinks, improved boot grounding, and no procedural art-style popping.</p>
+    <p class="small">v0.26.06.16.1236 - Modular Witch Compact Rig Fix. Compact rig reassembly for the modular witch avatar: tighter part overlap, connected head/torso/arms/boots, restrained motion, and a more coherent chibi silhouette.</p>
     <h2>Audio</h2><div id="audioControls">
   <button class="secondary sectionButton" id="audioToggle" onclick="toggleAudio()">Enable All Audio</button>
   <div class="audioRow">
@@ -132,8 +132,8 @@ button:disabled{opacity:.52;filter:grayscale(.4);cursor:not-allowed}
   </aside>
 </div>
 <script>
-const BUILD_VERSION='v0.26.06.16.1124';
-const BUILD_SUMMARY='Modular Witch Direction and Blink Polish';
+const BUILD_VERSION='v0.26.06.16.1236';
+const BUILD_SUMMARY='Modular Witch Compact Rig Fix';
 const BUILD_LABEL=BUILD_VERSION+' - '+BUILD_SUMMARY;
 const SAVE_KEY='purpleHouse_'+BUILD_VERSION;
 const WORLD_W=1672, WORLD_H=941;
@@ -299,37 +299,38 @@ function witchPartsReady(){
 }
 
 const MODULAR_WITCH_ENABLED=true;
-// Modular Witch Direction + Blink Polish.
-// Layout values are centralized for easy future tuning. Coordinates are in
-// witch-local "world pixels" from the ground point between the boots.
+// Modular Witch Compact Rig Reassembly Fix.
+// These values are centralized for quick tuning. Coordinates are in local
+// witch-space pixels, measured from the root ground point between the boots.
+// This pass intentionally favors overlap and compactness over wide spacing.
 const WITCH_PART_LAYOUT={
-  // lower body / grounding
-  skirtBack:{x:0,y:-25,scale:.32,pivotX:.5,pivotY:.24,alpha:.72},
-  bootLeft:{x:-10,y:11,scale:.43,pivotX:.50,pivotY:.80},
-  bootRight:{x:11,y:11,scale:.43,pivotX:.50,pivotY:.80},
-  legLeft:{x:-2,y:-2,scale:.31,pivotX:.50,pivotY:.45,alpha:.78},
-  hips:{x:0,y:-21,scale:.52,pivotX:.50,pivotY:.50},
-  body:{x:0,y:-52,scale:.58,pivotX:.50,pivotY:.55},
-  capeLeft:{x:-22,y:-43,scale:.29,pivotX:.50,pivotY:.38,alpha:.70},
-  capeRight:{x:22,y:-43,scale:.29,pivotX:.50,pivotY:.38,alpha:.70},
-  skirtFront:{x:0,y:-25,scale:.36,pivotX:.50,pivotY:.22,alpha:.86},
+  // Compact connected lower body
+  skirtBack:{x:0,y:-12,scale:.24,pivotX:.5,pivotY:.18,alpha:.64},
+  bootLeft:{x:-8,y:3,scale:.38,pivotX:.50,pivotY:.82},
+  bootRight:{x:8,y:3,scale:.38,pivotX:.50,pivotY:.82},
+  legLeft:{x:-1,y:-7,scale:.34,pivotX:.50,pivotY:.40,alpha:.82},
+  hips:{x:0,y:-14,scale:.47,pivotX:.50,pivotY:.50},
+  body:{x:0,y:-36,scale:.52,pivotX:.50,pivotY:.56},
+  capeLeft:{x:-16,y:-29,scale:.20,pivotX:.50,pivotY:.34,alpha:.55},
+  capeRight:{x:16,y:-29,scale:.20,pivotX:.50,pivotY:.34,alpha:.55},
+  skirtFront:{x:0,y:-10,scale:.28,pivotX:.50,pivotY:.16,alpha:.82},
 
-  // shoulders / hands
-  armRight:{x:25,y:-59,scale:.28,pivotX:.50,pivotY:.18},
-  armLeft:{x:-25,y:-58,scale:.28,pivotX:.50,pivotY:.22},
-  wand:{x:-36,y:-43,scale:.25,pivotX:.18,pivotY:.50,alpha:.68},
+  // Arms tucked closer to the torso so sleeves connect to shoulders
+  armRight:{x:17,y:-38,scale:.23,pivotX:.50,pivotY:.18},
+  armLeft:{x:-17,y:-37,scale:.23,pivotX:.50,pivotY:.22},
+  wand:{x:-24,y:-30,scale:.18,pivotX:.18,pivotY:.50,alpha:.62},
 
-  // head group. These stay tightly clustered so hat/hair/face read as one head.
-  faceOpen:{x:0,y:-91,scale:.62,pivotX:.50,pivotY:.50},
-  faceBlink:{x:0,y:-91,scale:.68,pivotX:.50,pivotY:.50},
-  eyelidLeft:{x:-12,y:-91,scale:.27,pivotX:.50,pivotY:.48,alpha:.96},
-  eyelidRight:{x:12,y:-91,scale:.27,pivotX:.50,pivotY:.48,alpha:.96},
-  hairBack:{x:0,y:-100,scale:.34,pivotX:.50,pivotY:.48,alpha:.96},
-  hairFront:{x:0,y:-108,scale:.43,pivotX:.50,pivotY:.46},
-  hairSideLong:{x:21,y:-101,scale:.28,pivotX:.50,pivotY:.28,alpha:.92},
-  hairSideLeft:{x:-20,y:-96,scale:.26,pivotX:.50,pivotY:.24,alpha:.90},
-  hairSideRight:{x:19,y:-96,scale:.26,pivotX:.50,pivotY:.24,alpha:.90},
-  hat:{x:0,y:-126,scale:.33,pivotX:.50,pivotY:.58}
+  // Compact head stack: face low, hair overlapping, hat sitting directly on hair.
+  faceOpen:{x:0,y:-57,scale:.54,pivotX:.50,pivotY:.50},
+  faceBlink:{x:0,y:-57,scale:.56,pivotX:.50,pivotY:.50},
+  eyelidLeft:{x:-8.5,y:-57,scale:.22,pivotX:.50,pivotY:.48,alpha:.96},
+  eyelidRight:{x:8.5,y:-57,scale:.22,pivotX:.50,pivotY:.48,alpha:.96},
+  hairBack:{x:0,y:-63,scale:.25,pivotX:.50,pivotY:.44,alpha:.90},
+  hairFront:{x:0,y:-66,scale:.34,pivotX:.50,pivotY:.42},
+  hairSideLong:{x:16,y:-61,scale:.20,pivotX:.50,pivotY:.24,alpha:.84},
+  hairSideLeft:{x:-14,y:-58,scale:.18,pivotX:.50,pivotY:.24,alpha:.84},
+  hairSideRight:{x:13,y:-58,scale:.18,pivotX:.50,pivotY:.24,alpha:.84},
+  hat:{x:0,y:-83,scale:.24,pivotX:.50,pivotY:.60}
 };
 function drawModularWitch(){
   const p=SpriteArt.witchParts||{};
@@ -343,22 +344,16 @@ function drawModularWitch(){
   const counter=Math.sin(step+Math.PI);
   const idleMode=witch.idleMode;
   const idleClock=witch.idleClock||0;
-  const blink=(frame%230)>224 || (!moving && frame%390>384);
-  const rareSleepyFace=(!moving && idleMode==='watch' && frame%620>590 && spriteReady(p.faceBlink));
-  const bob=moving?Math.abs(stepA)*sw(1.45):Math.sin(frame*.06)*sw(.72);
-  const sideDir=facing==='left'?-1:(facing==='right'?1:0);
-  const goingUp=facing==='up';
-  const look=(!moving&&idleMode==='look')?Math.sin(idleClock*.09)*sw(1.4):0;
-  const watchMode=!moving && idleMode==='watch';
+  const blink = (!moving && (frame%310)>304) || (moving && (frame%420)>416);
+  const bob=moving?Math.abs(stepA)*sw(.55):Math.sin(frame*.05)*sw(.28);
   const x=sx(witch.x), y=sy(witch.y)+bob;
   const spriteS=cs()*.255;
 
-  // Direction cues intentionally stay subtle. The modular witch remains active
-  // in all directions to avoid popping into the old procedural art style.
-  const lean=moving?(sideDir*0.020 + (goingUp?-0.006:0)):0;
-  const squashX=1 + (moving?Math.abs(sideDir)*0.018:0);
-  const headYOffset=goingUp?sw(-2.0):0;
-  const faceAlpha=goingUp?.90:1;
+  // Keep direction handling extremely subtle; avoid strong transforms that pull parts apart.
+  const sideDir=facing==='left'?-1:(facing==='right'?1:0);
+  const goingUp=facing==='up';
+  const bodyLean = moving ? sideDir*0.004 : 0;
+  const look=(!moving&&idleMode==='look')?Math.sin(idleClock*.08)*sw(.5):0;
 
   function drawPart(img,layout,extra={}){
     if(!spriteReady(img)||!layout)return false;
@@ -381,71 +376,53 @@ function drawModularWitch(){
   }
 
   ctx.save();
-  ctx.fillStyle='rgba(0,0,0,.25)';
+  ctx.fillStyle='rgba(0,0,0,.22)';
   ctx.beginPath();
-  ctx.ellipse(x,y+sw(21),sw(24),sw(7.5),0,0,Math.PI*2);
+  ctx.ellipse(x,y+sw(8),sw(16),sw(5.5),0,0,Math.PI*2);
   ctx.fill();
 
   ctx.translate(x,y);
-  ctx.rotate(lean);
-  ctx.scale(squashX,1);
+  ctx.rotate(bodyLean);
 
-  // BODY GROUP: feet stay close to the ground while the body gently breathes.
-  const footShift= moving ? sw(1.35) : 0;
-  const sideFootOffset= sideDir ? sideDir*0.9 : 0;
-  drawPart(p.skirtBack,WITCH_PART_LAYOUT.skirtBack,{rot:Math.sin(frame*.035)*0.002});
-  drawPart(p.bootLeft,WITCH_PART_LAYOUT.bootLeft,{x:(counter*footShift/cs())-sideFootOffset,rot:counter*.020});
-  drawPart(p.bootRight,WITCH_PART_LAYOUT.bootRight,{x:(stepA*footShift/cs())+sideFootOffset,rot:-stepA*.020});
-  if(spriteReady(p.legLeft))drawPart(p.legLeft,WITCH_PART_LAYOUT.legLeft,{x:counter*.7,alpha:.74});
+  // Fixed group anchors: root=boots, body=skirt/torso, head=face/hair/hat.
+  const footShift = moving ? sw(.55) : 0;
+  drawPart(p.skirtBack,WITCH_PART_LAYOUT.skirtBack);
+  drawPart(p.bootLeft,WITCH_PART_LAYOUT.bootLeft,{x:counter*footShift/cs(),rot:counter*.008});
+  drawPart(p.bootRight,WITCH_PART_LAYOUT.bootRight,{x:stepA*footShift/cs(),rot:-stepA*.008});
+  if(spriteReady(p.legLeft))drawPart(p.legLeft,WITCH_PART_LAYOUT.legLeft,{alpha:.78});
   drawPart(p.hips,WITCH_PART_LAYOUT.hips);
   drawPart(p.body,WITCH_PART_LAYOUT.body);
-  drawPart(p.capeLeft,WITCH_PART_LAYOUT.capeLeft,{rot:Math.sin(frame*.04)*0.003});
-  drawPart(p.capeRight,WITCH_PART_LAYOUT.capeRight,{rot:-Math.sin(frame*.04)*0.003});
+  drawPart(p.capeLeft,WITCH_PART_LAYOUT.capeLeft);
+  drawPart(p.capeRight,WITCH_PART_LAYOUT.capeRight);
 
-  // ARMS: subtle, close to torso. Wand remains idle-only to avoid floating.
-  const armSwing=moving?stepA*.026:Math.sin(frame*.04)*.009;
-  const watchLift=watchMode?-4:0;
-  drawPart(p.armRight,WITCH_PART_LAYOUT.armRight,{y:watchLift,rot:-0.014-armSwing});
-  drawPart(p.armLeft,WITCH_PART_LAYOUT.armLeft,{rot:0.012+armSwing});
-  if(!moving && spriteReady(p.wand))drawPart(p.wand,WITCH_PART_LAYOUT.wand,{rot:Math.sin(frame*.05)*0.006});
-  if(watchMode){
-    ctx.save();
-    ctx.strokeStyle='#d9b465';
-    ctx.lineWidth=Math.max(.8,1.0*cs());
-    ctx.beginPath();
-    ctx.arc(sw(31),-sw(57),sw(3.7),0,Math.PI*2);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(sw(31),-sw(57)); ctx.lineTo(sw(31),-sw(59.2));
-    ctx.moveTo(sw(31),-sw(57)); ctx.lineTo(sw(33),-sw(56.2));
-    ctx.stroke();
-    ctx.restore();
-  }
-
+  const armSwing = moving ? stepA*.010 : Math.sin(frame*.03)*.003;
+  drawPart(p.armRight,WITCH_PART_LAYOUT.armRight,{rot:-0.004-armSwing});
+  drawPart(p.armLeft,WITCH_PART_LAYOUT.armLeft,{rot:0.004+armSwing});
+  if(!moving && spriteReady(p.wand))drawPart(p.wand,WITCH_PART_LAYOUT.wand,{rot:Math.sin(frame*.04)*0.002});
   drawPart(p.skirtFront,WITCH_PART_LAYOUT.skirtFront);
 
-  // HEAD GROUP: one shared transform prevents hat/hair/face drift.
+  // HEAD GROUP
   ctx.save();
-  ctx.translate(look + sideDir*sw(1.2), headYOffset - Math.sin(frame*.055)*sw(.20));
-  drawPart(p.hairBack,WITCH_PART_LAYOUT.hairBack,{alpha:goingUp?.98:.96});
-  drawPart(rareSleepyFace?p.faceBlink:p.faceOpen,rareSleepyFace?WITCH_PART_LAYOUT.faceBlink:WITCH_PART_LAYOUT.faceOpen,{alpha:faceAlpha});
-  if(blink && !rareSleepyFace && spriteReady(p.eyelidLeft) && spriteReady(p.eyelidRight)){
+  ctx.translate(look + sideDir*sw(.18), (goingUp?-sw(.2):0));
+  drawPart(p.hairBack,WITCH_PART_LAYOUT.hairBack);
+  drawPart(p.faceOpen,WITCH_PART_LAYOUT.faceOpen,{alpha:goingUp?.95:1});
+  if(blink && spriteReady(p.eyelidLeft) && spriteReady(p.eyelidRight)){
     drawPart(p.eyelidLeft,WITCH_PART_LAYOUT.eyelidLeft);
     drawPart(p.eyelidRight,WITCH_PART_LAYOUT.eyelidRight);
   }
-  drawPart(p.hairFront,WITCH_PART_LAYOUT.hairFront,{rot:Math.sin(frame*.04)*0.002});
-  if(spriteReady(p.hairSideLong))drawPart(p.hairSideLong,WITCH_PART_LAYOUT.hairSideLong,{rot:Math.sin(frame*.05)*0.003});
-  if(spriteReady(p.hairSideLeft))drawPart(p.hairSideLeft,WITCH_PART_LAYOUT.hairSideLeft,{rot:-Math.sin(frame*.05)*0.002});
-  if(spriteReady(p.hairSideRight))drawPart(p.hairSideRight,WITCH_PART_LAYOUT.hairSideRight,{rot:Math.sin(frame*.05)*0.002});
-  drawPart(p.hat,WITCH_PART_LAYOUT.hat,{rot:Math.sin(frame*.035)*0.002});
+  drawPart(p.hairFront,WITCH_PART_LAYOUT.hairFront);
+  if(spriteReady(p.hairSideLong))drawPart(p.hairSideLong,WITCH_PART_LAYOUT.hairSideLong);
+  if(spriteReady(p.hairSideLeft))drawPart(p.hairSideLeft,WITCH_PART_LAYOUT.hairSideLeft);
+  if(spriteReady(p.hairSideRight))drawPart(p.hairSideRight,WITCH_PART_LAYOUT.hairSideRight);
+  drawPart(p.hat,WITCH_PART_LAYOUT.hat);
   ctx.restore();
 
   if(!moving && idleMode==='look'){
     ctx.save();
-    ctx.strokeStyle='rgba(247,231,160,.72)';
-    ctx.lineWidth=Math.max(.8,1.0*cs());
+    ctx.strokeStyle='rgba(247,231,160,.58)';
+    ctx.lineWidth=Math.max(.7,0.9*cs());
     ctx.beginPath();
-    ctx.arc(look+sw(18),-sw(77),sw(3.2),-.8,.5);
+    ctx.arc(look+sw(10),-sw(49),sw(2.2),-.8,.5);
     ctx.stroke();
     ctx.restore();
   }
