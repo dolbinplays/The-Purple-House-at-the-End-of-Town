@@ -76,7 +76,7 @@ button:disabled{opacity:.52;filter:grayscale(.4);cursor:not-allowed}
   <div id="gameBox">
     <canvas id="c"></canvas>
     <div id="hud">
-      <div class="pill" id="versionPill">v0.26.06.16.1236 - Modular Witch Compact Rig Fix</div>
+      <div class="pill" id="versionPill">v0.26.06.16.1352 - Stable Witch Model and Walk Speed Fix</div>
       <div class="pill" id="dayPill">Day 1</div>
       <div class="pill" id="timePill">Morning</div>
       <div class="pill" id="coinPill">Coins 12</div>
@@ -107,7 +107,7 @@ button:disabled{opacity:.52;filter:grayscale(.4);cursor:not-allowed}
   </div>
   <aside id="side">
     <h1>The Purple House<br>at the End of Town</h1>
-    <p class="small">v0.26.06.16.1236 - Modular Witch Compact Rig Fix. Compact rig reassembly for the modular witch avatar: tighter part overlap, connected head/torso/arms/boots, restrained motion, and a more coherent chibi silhouette.</p>
+    <p class="small">v0.26.06.16.1352 - Stable Witch Model and Walk Speed Fix. Stable cached witch model with coherent assembled sprite rendering, reduced paper-doll drift, slower cozy movement speed, and simpler whole-body walk motion.</p>
     <h2>Audio</h2><div id="audioControls">
   <button class="secondary sectionButton" id="audioToggle" onclick="toggleAudio()">Enable All Audio</button>
   <div class="audioRow">
@@ -132,8 +132,8 @@ button:disabled{opacity:.52;filter:grayscale(.4);cursor:not-allowed}
   </aside>
 </div>
 <script>
-const BUILD_VERSION='v0.26.06.16.1236';
-const BUILD_SUMMARY='Modular Witch Compact Rig Fix';
+const BUILD_VERSION='v0.26.06.16.1352';
+const BUILD_SUMMARY='Stable Witch Model and Walk Speed Fix';
 const BUILD_LABEL=BUILD_VERSION+' - '+BUILD_SUMMARY;
 const SAVE_KEY='purpleHouse_'+BUILD_VERSION;
 const WORLD_W=1672, WORLD_H=941;
@@ -184,7 +184,7 @@ function playNextTrack(initial=false){if(!AudioSys.musicEnabled)return;clearTime
 function tone(freq,dur=.14,type='sine',gain=.12,when=0){if(!AudioSys.sfxEnabled)return;const ctx=ensureAudio();if(!ctx)return;const t=ctx.currentTime+when;const o=ctx.createOscillator(),g=ctx.createGain();o.type=type;o.frequency.setValueAtTime(freq,t);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(gain*AudioSys.sfxVolume*AudioSys.sfxOutputScale,t+.012);g.gain.exponentialRampToValueAtTime(.0001,t+dur);o.connect(g).connect(ctx.destination);o.start(t);o.stop(t+dur+.03);}
 function noise(dur=.18,gain=.12,filterFreq=900,when=0){if(!AudioSys.sfxEnabled)return;const ctx=ensureAudio();if(!ctx)return;const sr=ctx.sampleRate,len=Math.max(1,Math.floor(dur*sr));const buf=ctx.createBuffer(1,len,sr),data=buf.getChannelData(0);for(let i=0;i<len;i++)data[i]=(Math.random()*2-1)*(1-i/len);const src=ctx.createBufferSource();src.buffer=buf;const f=ctx.createBiquadFilter();f.type='lowpass';f.frequency.value=filterFreq;const g=ctx.createGain();g.gain.value=gain*AudioSys.sfxVolume*AudioSys.sfxOutputScale;src.connect(f).connect(g).connect(ctx.destination);src.start(ctx.currentTime+when);}
 function playSfx(kind){if(!AudioSys.sfxEnabled)return;switch(kind){case'footstep':noise(.045,.085,420);tone(95,.045,'triangle',.032,.01);break;case'ui':tone(660,.08,'triangle',.075);tone(990,.12,'sine',.055,.055);break;case'gather':tone(880,.08,'sine',.075);tone(1175,.12,'triangle',.06,.07);noise(.08,.04,1800,.02);break;case'poison':tone(196,.18,'sawtooth',.08);tone(147,.24,'triangle',.06,.05);noise(.18,.065,650);break;case'brew':tone(220,.16,'sine',.08);tone(330,.20,'triangle',.075,.08);tone(660,.34,'sine',.06,.18);noise(.25,.07,1200,.02);break;case'ghost':tone(247,.55,'sine',.085);tone(311,.65,'sine',.055,.05);noise(.6,.07,900,.02);break;case'offering':tone(523,.12,'triangle',.07);tone(784,.28,'sine',.08,.08);tone(1046,.34,'sine',.06,.16);break;case'shop':tone(740,.10,'triangle',.08);tone(988,.15,'triangle',.065,.09);break;case'choiceGood':tone(523,.12,'sine',.075);tone(659,.13,'sine',.065,.08);tone(784,.18,'sine',.065,.16);break;case'choiceDark':tone(196,.22,'sawtooth',.085);tone(98,.35,'triangle',.065,.06);noise(.25,.07,500,.03);break;case'mischief':tone(880,.08,'square',.06);tone(660,.08,'square',.055,.06);tone(990,.12,'triangle',.06,.13);break;case'upgrade':tone(392,.12,'triangle',.07);tone(523,.12,'triangle',.07,.08);tone(784,.22,'sine',.065,.18);break;case'sleep':tone(196,.28,'sine',.055);tone(174,.35,'sine',.045,.25);noise(.35,.035,350,.45);break;case'snore':tone(130,.40,'triangle',.048);noise(.45,.035,300,.05);break;case'explore':tone(294,.10,'triangle',.06);tone(392,.14,'triangle',.06,.08);noise(.12,.045,900,.04);break;case'well':tone(330,.18,'sine',.06);tone(660,.45,'sine',.06,.12);break;case'save':tone(600,.08,'triangle',.06);tone(800,.1,'triangle',.055,.07);break;case'familiar':tone(700,.08,'sine',.06);tone(900,.16,'triangle',.06,.08);break;}}
-function maybeFootstep(){if(!witch.moving||!AudioSys.sfxEnabled)return;const gap=Math.max(8,18-Math.min(8,witch.speed*1.8));if(frame-AudioSys.lastFoot>gap){AudioSys.lastFoot=frame;playSfx('footstep');}}
+function maybeFootstep(){if(!witch.moving||!AudioSys.sfxEnabled)return;const gap=Math.max(18,34-Math.min(10,witch.speed*4.5));if(frame-AudioSys.lastFoot>gap){AudioSys.lastFoot=frame;playSfx('footstep');}}
 
 const bg=new Image();
 bg.src='the_purple_witch_s_village_hub_clean.png?v=0323c';
@@ -299,134 +299,95 @@ function witchPartsReady(){
 }
 
 const MODULAR_WITCH_ENABLED=true;
-// Modular Witch Compact Rig Reassembly Fix.
-// These values are centralized for quick tuning. Coordinates are in local
-// witch-space pixels, measured from the root ground point between the boots.
-// This pass intentionally favors overlap and compactness over wide spacing.
-const WITCH_PART_LAYOUT={
-  // Compact connected lower body
-  skirtBack:{x:0,y:-12,scale:.24,pivotX:.5,pivotY:.18,alpha:.64},
-  bootLeft:{x:-8,y:3,scale:.38,pivotX:.50,pivotY:.82},
-  bootRight:{x:8,y:3,scale:.38,pivotX:.50,pivotY:.82},
-  legLeft:{x:-1,y:-7,scale:.34,pivotX:.50,pivotY:.40,alpha:.82},
-  hips:{x:0,y:-14,scale:.47,pivotX:.50,pivotY:.50},
-  body:{x:0,y:-36,scale:.52,pivotX:.50,pivotY:.56},
-  capeLeft:{x:-16,y:-29,scale:.20,pivotX:.50,pivotY:.34,alpha:.55},
-  capeRight:{x:16,y:-29,scale:.20,pivotX:.50,pivotY:.34,alpha:.55},
-  skirtFront:{x:0,y:-10,scale:.28,pivotX:.50,pivotY:.16,alpha:.82},
-
-  // Arms tucked closer to the torso so sleeves connect to shoulders
-  armRight:{x:17,y:-38,scale:.23,pivotX:.50,pivotY:.18},
-  armLeft:{x:-17,y:-37,scale:.23,pivotX:.50,pivotY:.22},
-  wand:{x:-24,y:-30,scale:.18,pivotX:.18,pivotY:.50,alpha:.62},
-
-  // Compact head stack: face low, hair overlapping, hat sitting directly on hair.
-  faceOpen:{x:0,y:-57,scale:.54,pivotX:.50,pivotY:.50},
-  faceBlink:{x:0,y:-57,scale:.56,pivotX:.50,pivotY:.50},
-  eyelidLeft:{x:-8.5,y:-57,scale:.22,pivotX:.50,pivotY:.48,alpha:.96},
-  eyelidRight:{x:8.5,y:-57,scale:.22,pivotX:.50,pivotY:.48,alpha:.96},
-  hairBack:{x:0,y:-63,scale:.25,pivotX:.50,pivotY:.44,alpha:.90},
-  hairFront:{x:0,y:-66,scale:.34,pivotX:.50,pivotY:.42},
-  hairSideLong:{x:16,y:-61,scale:.20,pivotX:.50,pivotY:.24,alpha:.84},
-  hairSideLeft:{x:-14,y:-58,scale:.18,pivotX:.50,pivotY:.24,alpha:.84},
-  hairSideRight:{x:13,y:-58,scale:.18,pivotX:.50,pivotY:.24,alpha:.84},
-  hat:{x:0,y:-83,scale:.24,pivotX:.50,pivotY:.60}
-};
-function drawModularWitch(){
+// Stable Witch Model + Walk Speed Fix.
+// The runtime now builds a cached composite sprite from the uploaded witch parts
+// and draws that assembled sprite as one character. This avoids the exploded
+// paper-doll look caused by independently moving each part during gameplay.
+const STABLE_WITCH_MODEL={normal:null,blink:null,ready:false,w:220,h:260};
+const STABLE_WITCH_PARTS=[
+  // name, image key, x, y, w, h, alpha, rotation degrees
+  ['hairBack','hairBack',46,66,130,83,.90,0],
+  ['legLeft','legLeft',78,178,45,25,.80,0],
+  ['bootLeft','bootLeft',79,196,31,48,1,0],
+  ['bootRight','bootRight',113,196,37,48,1,0],
+  ['armRight','armRight',139,119,42,52,1,-8],
+  ['armLeft','armLeft',38,130,54,27,1,8],
+  ['hips','hips',70,153,80,50,1,0],
+  ['body','body',54,111,118,107,1,0],
+  ['capeLeft','capeLeft',47,137,48,50,.50,0],
+  ['capeRight','capeRight',130,137,48,50,.50,0],
+  ['skirtFront','skirtFront',55,154,113,67,.78,0],
+  ['faceOpen','faceOpen',73,72,74,61,1,0],
+  ['hairFront','hairFront',58,52,104,66,1,0],
+  ['hairSideLeft','hairSideLeft',55,84,36,33,.90,0],
+  ['hairSideRight','hairSideRight',135,84,28,34,.90,0],
+  ['hairSideLong','hairSideLong',135,72,45,36,.82,0],
+  ['hat','hat',37,20,145,78,1,0],
+  ['wand','wand',36,154,65,14,.72,-5]
+];
+function drawCachedPart(g,img,x,y,w,h,alpha=1,rotDeg=0){
+  if(!spriteReady(img))return false;
+  g.save();
+  g.globalAlpha=alpha;
+  g.translate(x+w/2,y+h/2);
+  if(rotDeg)g.rotate(rotDeg*Math.PI/180);
+  g.drawImage(img,-w/2,-h/2,w,h);
+  g.restore();
+  return true;
+}
+function buildStableWitchComposite(blink=false){
   const p=SpriteArt.witchParts||{};
   const required=[p.hat,p.hairBack,p.hairFront,p.faceOpen,p.body,p.hips,p.skirtFront,p.bootLeft,p.bootRight,p.armLeft,p.armRight];
-  if(!required.every(spriteReady))return false;
-
+  if(!required.every(spriteReady))return null;
+  const cache=blink?'blink':'normal';
+  if(STABLE_WITCH_MODEL[cache])return STABLE_WITCH_MODEL[cache];
+  const c=document.createElement('canvas');
+  c.width=STABLE_WITCH_MODEL.w; c.height=STABLE_WITCH_MODEL.h;
+  const g=c.getContext('2d');
+  g.clearRect(0,0,c.width,c.height);
+  g.imageSmoothingEnabled=true;
+  g.imageSmoothingQuality='high';
+  // Baked soft shadow so the feet read as grounded even with tiny whole-body bob.
+  g.save();
+  g.fillStyle='rgba(0,0,0,.30)';
+  g.beginPath();
+  g.ellipse(110,231,36,8,0,0,Math.PI*2);
+  g.fill();
+  g.restore();
+  for(const part of STABLE_WITCH_PARTS){
+    const [name,key,x,y,w,h,alpha,rot]=part;
+    // Wand is included but low-alpha and locked to the body; it no longer swings separately.
+    drawCachedPart(g,p[key],x,y,w,h,alpha,rot);
+  }
+  if(blink && spriteReady(p.eyelidLeft) && spriteReady(p.eyelidRight)){
+    drawCachedPart(g,p.eyelidLeft,82,85,24,19,.96,0);
+    drawCachedPart(g,p.eyelidRight,113,85,24,18,.96,0);
+  }
+  STABLE_WITCH_MODEL[cache]=c;
+  STABLE_WITCH_MODEL.ready=true;
+  return c;
+}
+function drawModularWitch(){
   const moving=witch.moving;
   const facing=witch.facing||'down';
   const step=witch.step||0;
+  const blink=(!moving && (frame%330)>323) || (moving && (frame%520)>516);
+  const sprite=buildStableWitchComposite(blink) || buildStableWitchComposite(false);
+  if(!sprite)return false;
+
   const stepA=Math.sin(step);
-  const counter=Math.sin(step+Math.PI);
-  const idleMode=witch.idleMode;
-  const idleClock=witch.idleClock||0;
-  const blink = (!moving && (frame%310)>304) || (moving && (frame%420)>416);
-  const bob=moving?Math.abs(stepA)*sw(.55):Math.sin(frame*.05)*sw(.28);
-  const x=sx(witch.x), y=sy(witch.y)+bob;
-  const spriteS=cs()*.255;
-
-  // Keep direction handling extremely subtle; avoid strong transforms that pull parts apart.
+  const idleBob=Math.sin(frame*.045)*sw(.20);
+  const walkBob=moving?Math.abs(stepA)*sw(.42):idleBob;
+  const x=sx(witch.x), y=sy(witch.y)+walkBob;
+  const drawW=sw(88), drawH=sw(104);
   const sideDir=facing==='left'?-1:(facing==='right'?1:0);
-  const goingUp=facing==='up';
-  const bodyLean = moving ? sideDir*0.004 : 0;
-  const look=(!moving&&idleMode==='look')?Math.sin(idleClock*.08)*sw(.5):0;
-
-  function drawPart(img,layout,extra={}){
-    if(!spriteReady(img)||!layout)return false;
-    const sx0=(layout.x+(extra.x||0))*cs();
-    const sy0=(layout.y+(extra.y||0))*cs();
-    const scale=(layout.scale||1)*(extra.scale||1);
-    const w=img.naturalWidth*spriteS*scale;
-    const h=img.naturalHeight*spriteS*scale;
-    const rot=(layout.rot||0)+(extra.rot||0);
-    const ax=('pivotX' in layout?layout.pivotX:.5);
-    const ay=('pivotY' in layout?layout.pivotY:.5);
-    const alpha=('alpha' in extra?extra.alpha:('alpha' in layout?layout.alpha:1));
-    ctx.save();
-    ctx.globalAlpha=alpha;
-    ctx.translate(sx0,sy0);
-    ctx.rotate(rot);
-    ctx.drawImage(img,-w*ax,-h*ay,w,h);
-    ctx.restore();
-    return true;
-  }
+  // Direction cue is intentionally tiny: the whole composite leans together.
+  const lean=moving?sideDir*.006:0;
 
   ctx.save();
-  ctx.fillStyle='rgba(0,0,0,.22)';
-  ctx.beginPath();
-  ctx.ellipse(x,y+sw(8),sw(16),sw(5.5),0,0,Math.PI*2);
-  ctx.fill();
-
   ctx.translate(x,y);
-  ctx.rotate(bodyLean);
-
-  // Fixed group anchors: root=boots, body=skirt/torso, head=face/hair/hat.
-  const footShift = moving ? sw(.55) : 0;
-  drawPart(p.skirtBack,WITCH_PART_LAYOUT.skirtBack);
-  drawPart(p.bootLeft,WITCH_PART_LAYOUT.bootLeft,{x:counter*footShift/cs(),rot:counter*.008});
-  drawPart(p.bootRight,WITCH_PART_LAYOUT.bootRight,{x:stepA*footShift/cs(),rot:-stepA*.008});
-  if(spriteReady(p.legLeft))drawPart(p.legLeft,WITCH_PART_LAYOUT.legLeft,{alpha:.78});
-  drawPart(p.hips,WITCH_PART_LAYOUT.hips);
-  drawPart(p.body,WITCH_PART_LAYOUT.body);
-  drawPart(p.capeLeft,WITCH_PART_LAYOUT.capeLeft);
-  drawPart(p.capeRight,WITCH_PART_LAYOUT.capeRight);
-
-  const armSwing = moving ? stepA*.010 : Math.sin(frame*.03)*.003;
-  drawPart(p.armRight,WITCH_PART_LAYOUT.armRight,{rot:-0.004-armSwing});
-  drawPart(p.armLeft,WITCH_PART_LAYOUT.armLeft,{rot:0.004+armSwing});
-  if(!moving && spriteReady(p.wand))drawPart(p.wand,WITCH_PART_LAYOUT.wand,{rot:Math.sin(frame*.04)*0.002});
-  drawPart(p.skirtFront,WITCH_PART_LAYOUT.skirtFront);
-
-  // HEAD GROUP
-  ctx.save();
-  ctx.translate(look + sideDir*sw(.18), (goingUp?-sw(.2):0));
-  drawPart(p.hairBack,WITCH_PART_LAYOUT.hairBack);
-  drawPart(p.faceOpen,WITCH_PART_LAYOUT.faceOpen,{alpha:goingUp?.95:1});
-  if(blink && spriteReady(p.eyelidLeft) && spriteReady(p.eyelidRight)){
-    drawPart(p.eyelidLeft,WITCH_PART_LAYOUT.eyelidLeft);
-    drawPart(p.eyelidRight,WITCH_PART_LAYOUT.eyelidRight);
-  }
-  drawPart(p.hairFront,WITCH_PART_LAYOUT.hairFront);
-  if(spriteReady(p.hairSideLong))drawPart(p.hairSideLong,WITCH_PART_LAYOUT.hairSideLong);
-  if(spriteReady(p.hairSideLeft))drawPart(p.hairSideLeft,WITCH_PART_LAYOUT.hairSideLeft);
-  if(spriteReady(p.hairSideRight))drawPart(p.hairSideRight,WITCH_PART_LAYOUT.hairSideRight);
-  drawPart(p.hat,WITCH_PART_LAYOUT.hat);
-  ctx.restore();
-
-  if(!moving && idleMode==='look'){
-    ctx.save();
-    ctx.strokeStyle='rgba(247,231,160,.58)';
-    ctx.lineWidth=Math.max(.7,0.9*cs());
-    ctx.beginPath();
-    ctx.arc(look+sw(10),-sw(49),sw(2.2),-.8,.5);
-    ctx.stroke();
-    ctx.restore();
-  }
-
+  ctx.rotate(lean);
+  ctx.drawImage(sprite,-drawW/2,-drawH+sw(10),drawW,drawH);
   ctx.restore();
   return true;
 }
@@ -791,17 +752,19 @@ function update(){
   let ax=0,ay=0;
   if(keys.ArrowLeft||keys.a)ax--; if(keys.ArrowRight||keys.d)ax++; if(keys.ArrowUp||keys.w)ay--; if(keys.ArrowDown||keys.s)ay++;
   let len=Math.hypot(ax,ay)||1;
-  witch.vx+=(ax/len)*1.0; witch.vy+=(ay/len)*1.0;
-  witch.vx*=.80; witch.vy*=.80;
+  // Slower cozy walk: lower acceleration and stronger damping prevent skating/skittering.
+  witch.vx+=(ax/len)*0.54; witch.vy+=(ay/len)*0.54;
+  witch.vx*=.72; witch.vy*=.72;
   witch.x=Math.max(70,Math.min(WORLD_W-70,witch.x+witch.vx));
   witch.y=Math.max(140,Math.min(WORLD_H-75,witch.y+witch.vy));
   witch.speed=Math.hypot(witch.vx,witch.vy);
-  witch.moving=witch.speed>.35;
+  witch.moving=witch.speed>.18;
   if(Math.abs(witch.vx)>.1)witch.dir=witch.vx>0?1:-1;
   if(witch.moving){
     if(Math.abs(witch.vx)>Math.abs(witch.vy)*.85)witch.facing=witch.vx>0?'right':'left';
     else witch.facing=witch.vy>0?'down':'up';
-    witch.step=(witch.step||0)+0.23+witch.speed*.18;
+    // Step animation now advances more slowly to match the reduced travel speed.
+    witch.step=(witch.step||0)+0.08+witch.speed*.035;
     witch.idleTimer=0; witch.idleMode='none'; witch.idleClock=0;
   } else {
     witch.facing='down';

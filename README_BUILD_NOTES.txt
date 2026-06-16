@@ -1,15 +1,14 @@
 The Purple House at the End of Town
-v0.26.06.16.1236 - Modular Witch Compact Rig Fix
+v0.26.06.16.1352 - Stable Witch Model and Walk Speed Fix
 
 Patch focus:
-- Aggressively retunes the modular witch layout into a compact connected chibi rig.
-- Pulls the head stack down and together so the face, hair, and hat read as one connected unit.
-- Pulls arms inward and upward so sleeves sit closer to the torso shoulders.
-- Moves boots upward and tucks them closer under the skirt/body silhouette.
-- Reduces skirt/hat dominance and favors overlap instead of part spacing.
-- Strongly reduces secondary motion so the rig stays visually connected.
-- Keeps the modular witch active as the primary renderer and preserves the old witch only as emergency fallback if parts fail to load.
-- Uses eyelid overlays for normal blinking instead of the O-mouth full-face blink.
+- Stabilizes the witch by building a cached composite sprite from the modular part PNGs.
+- Draws the assembled witch as one coherent character during gameplay instead of animating many loose paper-doll pieces.
+- Keeps eyelid-overlay blinking as the only part-level runtime overlay.
+- Removes independent hat, hair, cape, arm, boot, squash, and strong direction transforms during walking.
+- Reduces movement acceleration and increases damping so the witch walks at a slower cozy pace.
+- Slows the walk-step timer and footstep cadence so the animation better matches travel speed.
+- Preserves the old procedural witch renderer only as emergency fallback if modular sprite assets fail to load.
 
 Preserved systems:
 - Movement controls and interaction detection
@@ -19,10 +18,10 @@ Preserved systems:
 - Potion brewing, usable potions, potion shelf/sell extras
 - Villager requests, relationship memory, and follow-up rumors
 - Attic Divination, Village Signpost exploration, Old Well
-- Expanded Journal/RumorBoard and journal tabs
+- Expanded Journal/Rumor Board and journal tabs
 - Audio mixer, music/SFX toggles/sliders, music crossfade, WebAudio SFX
 - Save/load migration
 
 Known limitations:
-- This pass focuses on compact reassembly and restrained motion, not a full directional pose set.
-- Further art passes may still be useful for dedicated side/back modular poses or more refined blink placement.
+- The witch still uses a front-facing assembled model for all directions until true side/back modular artwork is available.
+- This patch prioritizes a stable readable character over advanced walk-cycle limb animation.
