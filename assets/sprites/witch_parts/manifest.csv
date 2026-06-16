@@ -1,0 +1,35 @@
+filename,category,source_bbox_xyxy,size_px,note
+arm_left_hand_forward.png,arm,"[46, 954, 202, 1032]","[156, 78]","Sleeved forearm with hand, forward pose"
+arm_right_down_hand.png,arm,"[23, 614, 169, 791]","[146, 177]","Sleeved arm with hand, hanging/down pose"
+boot_left_short.png,boot,"[53, 1066, 138, 1189]","[85, 123]",Short left boot variant
+boot_left_tall.png,boot,"[277, 1330, 359, 1457]","[82, 127]",Taller left boot variant
+boot_right_short.png,boot,"[158, 1065, 269, 1171]","[111, 106]",Short right boot variant
+boot_right_tall.png,boot,"[391, 1330, 490, 1453]","[99, 123]",Taller right boot variant
+cape_side_left.png,cloth,"[654, 621, 811, 784]","[157, 163]",Side cloth / cape piece on left
+cape_side_right.png,cloth,"[850, 601, 994, 775]","[144, 174]",Side cloth / cape piece on right
+eye_left_open_large.png,eye,"[522, 134, 621, 205]","[99, 71]",Large left open eye
+eye_left_open_small.png,eye,"[43, 1225, 126, 1288]","[83, 63]",Smaller left open eye
+eye_right_open_large.png,eye,"[676, 134, 766, 202]","[90, 68]",Large right open eye
+eye_right_open_small.png,eye,"[152, 1225, 230, 1286]","[78, 61]",Smaller right open eye
+eyebrow_left_high.png,eyebrow,"[498, 50, 642, 112]","[144, 62]",Large left eyebrow / raised variant
+eyebrow_left_low.png,eyebrow,"[48, 1334, 127, 1380]","[79, 46]",Smaller left eyebrow / low variant
+eyebrow_right_high.png,eyebrow,"[662, 58, 786, 104]","[124, 46]",Large right eyebrow / raised variant
+eyebrow_right_low.png,eyebrow,"[153, 1335, 229, 1381]","[76, 46]",Smaller right eyebrow / low variant
+eyelid_left.png,eyelid,"[389, 1225, 464, 1286]","[75, 61]",Closed left eyelid piece
+eyelid_right.png,eyelid,"[275, 1226, 353, 1281]","[78, 55]",Closed right eyelid piece
+face_closed_o_mouth.png,face,"[782, 383, 960, 553]","[178, 170]",Full face plate with closed eyes and O mouth
+face_open_smile.png,face,"[534, 383, 741, 552]","[207, 169]",Full face plate with open eyes and smile
+hair_back_main.png,hair,"[24, 327, 430, 587]","[406, 260]",Main back hair mass
+hair_front_main.png,hair,"[524, 222, 790, 390]","[266, 168]",Main front bangs / fringe
+hair_side_front_right_long.png,hair,"[826, 240, 960, 347]","[134, 107]",Long side bang / right side from viewer
+hair_side_left_short.png,hair,"[185, 613, 283, 702]","[98, 89]",Short side hair tuft
+hair_side_right_short.png,hair,"[586, 595, 660, 684]","[74, 89]",Short side hair tuft
+hat_main.png,hat,"[13, 45, 520, 319]","[507, 274]",Main witch hat
+hips_shorts_belt.png,hips,"[248, 913, 517, 1082]","[269, 169]",Shorts / waist / belt / pouch
+leg_left_stocking.png,leg,"[51, 827, 229, 926]","[178, 99]",Bent stocking leg / sock piece
+mouth_open_smile.png,mouth,"[826, 51, 946, 129]","[120, 78]",Open smiling mouth
+mouth_small_smile.png,mouth,"[827, 142, 946, 200]","[119, 58]",Small smiling mouth
+wand.png,prop,"[322, 1096, 591, 1155]","[269, 59]",Magic wand / staff
+skirt_back_long.png,skirt,"[533, 1108, 998, 1401]","[465, 293]",Longer back skirt / cloak drape
+skirt_front_short.png,skirt,"[559, 837, 991, 1092]","[432, 255]",Shorter front skirt / cloak drape
+torso_coat.png,torso,"[261, 585, 607, 899]","[346, 314]",Upper body / coat / dress torso

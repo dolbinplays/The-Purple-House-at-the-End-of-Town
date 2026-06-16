@@ -1,0 +1,512 @@
+[
+  {
+    "filename": "arm_left_hand_forward.png",
+    "category": "arm",
+    "source_bbox_xyxy": [
+      46,
+      954,
+      202,
+      1032
+    ],
+    "size_px": [
+      156,
+      78
+    ],
+    "note": "Sleeved forearm with hand, forward pose"
+  },
+  {
+    "filename": "arm_right_down_hand.png",
+    "category": "arm",
+    "source_bbox_xyxy": [
+      23,
+      614,
+      169,
+      791
+    ],
+    "size_px": [
+      146,
+      177
+    ],
+    "note": "Sleeved arm with hand, hanging/down pose"
+  },
+  {
+    "filename": "boot_left_short.png",
+    "category": "boot",
+    "source_bbox_xyxy": [
+      53,
+      1066,
+      138,
+      1189
+    ],
+    "size_px": [
+      85,
+      123
+    ],
+    "note": "Short left boot variant"
+  },
+  {
+    "filename": "boot_left_tall.png",
+    "category": "boot",
+    "source_bbox_xyxy": [
+      277,
+      1330,
+      359,
+      1457
+    ],
+    "size_px": [
+      82,
+      127
+    ],
+    "note": "Taller left boot variant"
+  },
+  {
+    "filename": "boot_right_short.png",
+    "category": "boot",
+    "source_bbox_xyxy": [
+      158,
+      1065,
+      269,
+      1171
+    ],
+    "size_px": [
+      111,
+      106
+    ],
+    "note": "Short right boot variant"
+  },
+  {
+    "filename": "boot_right_tall.png",
+    "category": "boot",
+    "source_bbox_xyxy": [
+      391,
+      1330,
+      490,
+      1453
+    ],
+    "size_px": [
+      99,
+      123
+    ],
+    "note": "Taller right boot variant"
+  },
+  {
+    "filename": "cape_side_left.png",
+    "category": "cloth",
+    "source_bbox_xyxy": [
+      654,
+      621,
+      811,
+      784
+    ],
+    "size_px": [
+      157,
+      163
+    ],
+    "note": "Side cloth / cape piece on left"
+  },
+  {
+    "filename": "cape_side_right.png",
+    "category": "cloth",
+    "source_bbox_xyxy": [
+      850,
+      601,
+      994,
+      775
+    ],
+    "size_px": [
+      144,
+      174
+    ],
+    "note": "Side cloth / cape piece on right"
+  },
+  {
+    "filename": "eye_left_open_large.png",
+    "category": "eye",
+    "source_bbox_xyxy": [
+      522,
+      134,
+      621,
+      205
+    ],
+    "size_px": [
+      99,
+      71
+    ],
+    "note": "Large left open eye"
+  },
+  {
+    "filename": "eye_left_open_small.png",
+    "category": "eye",
+    "source_bbox_xyxy": [
+      43,
+      1225,
+      126,
+      1288
+    ],
+    "size_px": [
+      83,
+      63
+    ],
+    "note": "Smaller left open eye"
+  },
+  {
+    "filename": "eye_right_open_large.png",
+    "category": "eye",
+    "source_bbox_xyxy": [
+      676,
+      134,
+      766,
+      202
+    ],
+    "size_px": [
+      90,
+      68
+    ],
+    "note": "Large right open eye"
+  },
+  {
+    "filename": "eye_right_open_small.png",
+    "category": "eye",
+    "source_bbox_xyxy": [
+      152,
+      1225,
+      230,
+      1286
+    ],
+    "size_px": [
+      78,
+      61
+    ],
+    "note": "Smaller right open eye"
+  },
+  {
+    "filename": "eyebrow_left_high.png",
+    "category": "eyebrow",
+    "source_bbox_xyxy": [
+      498,
+      50,
+      642,
+      112
+    ],
+    "size_px": [
+      144,
+      62
+    ],
+    "note": "Large left eyebrow / raised variant"
+  },
+  {
+    "filename": "eyebrow_left_low.png",
+    "category": "eyebrow",
+    "source_bbox_xyxy": [
+      48,
+      1334,
+      127,
+      1380
+    ],
+    "size_px": [
+      79,
+      46
+    ],
+    "note": "Smaller left eyebrow / low variant"
+  },
+  {
+    "filename": "eyebrow_right_high.png",
+    "category": "eyebrow",
+    "source_bbox_xyxy": [
+      662,
+      58,
+      786,
+      104
+    ],
+    "size_px": [
+      124,
+      46
+    ],
+    "note": "Large right eyebrow / raised variant"
+  },
+  {
+    "filename": "eyebrow_right_low.png",
+    "category": "eyebrow",
+    "source_bbox_xyxy": [
+      153,
+      1335,
+      229,
+      1381
+    ],
+    "size_px": [
+      76,
+      46
+    ],
+    "note": "Smaller right eyebrow / low variant"
+  },
+  {
+    "filename": "eyelid_left.png",
+    "category": "eyelid",
+    "source_bbox_xyxy": [
+      389,
+      1225,
+      464,
+      1286
+    ],
+    "size_px": [
+      75,
+      61
+    ],
+    "note": "Closed left eyelid piece"
+  },
+  {
+    "filename": "eyelid_right.png",
+    "category": "eyelid",
+    "source_bbox_xyxy": [
+      275,
+      1226,
+      353,
+      1281
+    ],
+    "size_px": [
+      78,
+      55
+    ],
+    "note": "Closed right eyelid piece"
+  },
+  {
+    "filename": "face_closed_o_mouth.png",
+    "category": "face",
+    "source_bbox_xyxy": [
+      782,
+      383,
+      960,
+      553
+    ],
+    "size_px": [
+      178,
+      170
+    ],
+    "note": "Full face plate with closed eyes and O mouth"
+  },
+  {
+    "filename": "face_open_smile.png",
+    "category": "face",
+    "source_bbox_xyxy": [
+      534,
+      383,
+      741,
+      552
+    ],
+    "size_px": [
+      207,
+      169
+    ],
+    "note": "Full face plate with open eyes and smile"
+  },
+  {
+    "filename": "hair_back_main.png",
+    "category": "hair",
+    "source_bbox_xyxy": [
+      24,
+      327,
+      430,
+      587
+    ],
+    "size_px": [
+      406,
+      260
+    ],
+    "note": "Main back hair mass"
+  },
+  {
+    "filename": "hair_front_main.png",
+    "category": "hair",
+    "source_bbox_xyxy": [
+      524,
+      222,
+      790,
+      390
+    ],
+    "size_px": [
+      266,
+      168
+    ],
+    "note": "Main front bangs / fringe"
+  },
+  {
+    "filename": "hair_side_front_right_long.png",
+    "category": "hair",
+    "source_bbox_xyxy": [
+      826,
+      240,
+      960,
+      347
+    ],
+    "size_px": [
+      134,
+      107
+    ],
+    "note": "Long side bang / right side from viewer"
+  },
+  {
+    "filename": "hair_side_left_short.png",
+    "category": "hair",
+    "source_bbox_xyxy": [
+      185,
+      613,
+      283,
+      702
+    ],
+    "size_px": [
+      98,
+      89
+    ],
+    "note": "Short side hair tuft"
+  },
+  {
+    "filename": "hair_side_right_short.png",
+    "category": "hair",
+    "source_bbox_xyxy": [
+      586,
+      595,
+      660,
+      684
+    ],
+    "size_px": [
+      74,
+      89
+    ],
+    "note": "Short side hair tuft"
+  },
+  {
+    "filename": "hat_main.png",
+    "category": "hat",
+    "source_bbox_xyxy": [
+      13,
+      45,
+      520,
+      319
+    ],
+    "size_px": [
+      507,
+      274
+    ],
+    "note": "Main witch hat"
+  },
+  {
+    "filename": "hips_shorts_belt.png",
+    "category": "hips",
+    "source_bbox_xyxy": [
+      248,
+      913,
+      517,
+      1082
+    ],
+    "size_px": [
+      269,
+      169
+    ],
+    "note": "Shorts / waist / belt / pouch"
+  },
+  {
+    "filename": "leg_left_stocking.png",
+    "category": "leg",
+    "source_bbox_xyxy": [
+      51,
+      827,
+      229,
+      926
+    ],
+    "size_px": [
+      178,
+      99
+    ],
+    "note": "Bent stocking leg / sock piece"
+  },
+  {
+    "filename": "mouth_open_smile.png",
+    "category": "mouth",
+    "source_bbox_xyxy": [
+      826,
+      51,
+      946,
+      129
+    ],
+    "size_px": [
+      120,
+      78
+    ],
+    "note": "Open smiling mouth"
+  },
+  {
+    "filename": "mouth_small_smile.png",
+    "category": "mouth",
+    "source_bbox_xyxy": [
+      827,
+      142,
+      946,
+      200
+    ],
+    "size_px": [
+      119,
+      58
+    ],
+    "note": "Small smiling mouth"
+  },
+  {
+    "filename": "wand.png",
+    "category": "prop",
+    "source_bbox_xyxy": [
+      322,
+      1096,
+      591,
+      1155
+    ],
+    "size_px": [
+      269,
+      59
+    ],
+    "note": "Magic wand / staff"
+  },
+  {
+    "filename": "skirt_back_long.png",
+    "category": "skirt",
+    "source_bbox_xyxy": [
+      533,
+      1108,
+      998,
+      1401
+    ],
+    "size_px": [
+      465,
+      293
+    ],
+    "note": "Longer back skirt / cloak drape"
+  },
+  {
+    "filename": "skirt_front_short.png",
+    "category": "skirt",
+    "source_bbox_xyxy": [
+      559,
+      837,
+      991,
+      1092
+    ],
+    "size_px": [
+      432,
+      255
+    ],
+    "note": "Shorter front skirt / cloak drape"
+  },
+  {
+    "filename": "torso_coat.png",
+    "category": "torso",
+    "source_bbox_xyxy": [
+      261,
+      585,
+      607,
+      899
+    ],
+    "size_px": [
+      346,
+      314
+    ],
+    "note": "Upper body / coat / dress torso"
+  }
+]

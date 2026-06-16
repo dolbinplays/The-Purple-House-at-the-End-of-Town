@@ -76,7 +76,7 @@ button:disabled{opacity:.52;filter:grayscale(.4);cursor:not-allowed}
   <div id="gameBox">
     <canvas id="c"></canvas>
     <div id="hud">
-      <div class="pill" id="versionPill">v0.26.05.23.1223 - Paper Doll Familiars and Pocket Watch</div>
+      <div class="pill" id="versionPill">v0.26.06.16.0955 - Modular Witch Sprite Assembly and Movement Animation</div>
       <div class="pill" id="dayPill">Day 1</div>
       <div class="pill" id="timePill">Morning</div>
       <div class="pill" id="coinPill">Coins 12</div>
@@ -107,7 +107,7 @@ button:disabled{opacity:.52;filter:grayscale(.4);cursor:not-allowed}
   </div>
   <aside id="side">
     <h1>The Purple House<br>at the End of Town</h1>
-    <p class="small">v0.26.05.23.1223 - Paper Doll Familiars and Pocket Watch. Paper-doll avatar and familiar build with directional witch poses, matching procedural familiars, and updated idle animation.</p>
+    <p class="small">v0.26.06.16.0955 - Modular Witch Sprite Assembly and Movement Animation. Modular layered witch avatar using cut-up sprite parts, with idle breathing, walking bob, blink, look-around, and fidget animation while preserving the existing cozy witch-life systems.</p>
     <h2>Audio</h2><div id="audioControls">
   <button class="secondary sectionButton" id="audioToggle" onclick="toggleAudio()">Enable All Audio</button>
   <div class="audioRow">
@@ -132,8 +132,8 @@ button:disabled{opacity:.52;filter:grayscale(.4);cursor:not-allowed}
   </aside>
 </div>
 <script>
-const BUILD_VERSION='v0.26.05.23.1223';
-const BUILD_SUMMARY='Paper Doll Familiars and Pocket Watch';
+const BUILD_VERSION='v0.26.06.16.0955';
+const BUILD_SUMMARY='Modular Witch Sprite Assembly and Movement Animation';
 const BUILD_LABEL=BUILD_VERSION+' - '+BUILD_SUMMARY;
 const SAVE_KEY='purpleHouse_'+BUILD_VERSION;
 const WORLD_W=1672, WORLD_H=941;
@@ -295,7 +295,122 @@ function witchPartsReady(){
   const p=SpriteArt.witchParts;
   return p && Object.values(p).every(spriteReady);
 }
+
+const MODULAR_WITCH_ENABLED=true;
+// Modular Witch Sprite Assembly Pass.
+// Draws the player witch from cut-up transparent PNG layers. If the images are
+// unavailable, the older procedural avatar remains as a safe fallback.
+function drawModularWitch(){
+  const p=SpriteArt.witchParts||{};
+  const required=[p.hat,p.hairBack,p.hairFront,p.faceOpen,p.faceBlink,p.body,p.hips,p.skirtBack,p.skirtFront,p.bootLeft,p.bootRight,p.armLeft,p.armRight];
+  if(!required.every(spriteReady))return false;
+
+  const moving=witch.moving;
+  const step=witch.step||0;
+  const stepA=Math.sin(step);
+  const counter=Math.sin(step+Math.PI);
+  const idleMode=witch.idleMode;
+  const idleClock=witch.idleClock||0;
+  const blink=(frame%205)>197 || (!moving && frame%360>350);
+  const bob=moving?Math.abs(stepA)*sw(4.6):Math.sin(frame*.06)*sw(1.5);
+  const sway=moving?Math.sin(step)*0.025:Math.sin(frame*.035)*0.008;
+  const look=(!moving&&idleMode==='look')?Math.sin(idleClock*.09)*sw(3.8):0;
+  const watchMode=!moving && idleMode==='watch';
+  const x=sx(witch.x), y=sy(witch.y)+bob;
+  const dir=(witch.facing==='left')?-1:1;
+  const mirrorSide=(witch.facing==='left'||witch.facing==='right');
+  const spriteS=cs()*.255;
+
+  function part(img,x0,y0,scale=1,rot=0,ax=.5,ay=.5,alpha=1){
+    if(!spriteReady(img))return false;
+    const w=img.naturalWidth*spriteS*scale, h=img.naturalHeight*spriteS*scale;
+    ctx.save();
+    ctx.globalAlpha=alpha;
+    ctx.translate(x0,y0);
+    ctx.rotate(rot);
+    ctx.drawImage(img,-w*ax,-h*ay,w,h);
+    ctx.restore();
+    return true;
+  }
+
+  ctx.save();
+  ctx.fillStyle='rgba(0,0,0,.25)';
+  ctx.beginPath();
+  ctx.ellipse(x,y+sw(22),sw(28),sw(10),0,0,Math.PI*2);
+  ctx.fill();
+
+  ctx.translate(x,y);
+  if(mirrorSide)ctx.scale(dir,1);
+  ctx.rotate(sway);
+
+  // Back / ground layers.
+  part(p.skirtBack,0,-sw(31),.72,0,.5,.18,.94);
+  part(p.hairBack,0,-sw(98),.52,Math.sin(frame*.035)*0.012,.5,.43,.98);
+
+  // Feet and lower body. These shift against one another while walking.
+  part(p.bootLeft,-sw(18)+counter*sw(5),sw(15),.47,counter*.08,.5,.58);
+  part(p.bootRight,sw(17)+stepA*sw(5),sw(16),.47,-stepA*.08,.5,.58);
+  if(spriteReady(p.legLeft))part(p.legLeft,-sw(4)+counter*sw(3),-sw(1),.34,counter*.05,.5,.5,.9);
+  part(p.hips,0,-sw(23),.43,0,.5,.45);
+
+  // Torso and cape/cloth layers.
+  part(p.body,0,-sw(62),.45,0,.5,.55);
+  part(p.capeLeft,-sw(30),-sw(45),.38,Math.sin(frame*.045)*.018,.5,.45,.9);
+  part(p.capeRight,sw(30),-sw(45),.38,-Math.sin(frame*.045)*.018,.5,.45,.9);
+
+  // Arms. Watch/fidget mode raises the forward arm and adds a small watch circle.
+  const armLift=watchMode?-sw(12):0;
+  part(p.armRight,sw(32),-sw(54)+armLift,.36,-0.10-stepA*.08,.5,.18);
+  part(p.armLeft,-sw(29),-sw(50),.36,0.08+stepA*.10,.5,.22);
+  if(watchMode){
+    ctx.save();
+    ctx.strokeStyle='#d9b465';
+    ctx.lineWidth=Math.max(.8,1.1*cs());
+    ctx.beginPath();
+    ctx.arc(sw(42),-sw(55),sw(4.8),0,Math.PI*2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(sw(42),-sw(55));
+    ctx.lineTo(sw(42),-sw(58));
+    ctx.moveTo(sw(42),-sw(55));
+    ctx.lineTo(sw(45),-sw(54));
+    ctx.stroke();
+    ctx.restore();
+  }
+  if(spriteReady(p.wand))part(p.wand,-sw(38),-sw(35),.35,-0.10+Math.sin(frame*.05)*.025,.18,.5,.92);
+
+  // Front skirt after arms/body to tie the paper doll together.
+  part(p.skirtFront,0,-sw(28),.59,0,.5,.18,.96);
+
+  // Head / face layers.
+  const headY=-sw(115)-Math.sin(frame*.055)*sw(.7);
+  const faceImg=blink?p.faceBlink:p.faceOpen;
+  part(faceImg,look,headY,.43,0,.5,.5);
+
+  // Hair and hat finish the silhouette.
+  part(p.hairFront,look,headY-sw(28),.45,Math.sin(frame*.04)*.012,.5,.45);
+  if(spriteReady(p.hairSideLong))part(p.hairSideLong,look+sw(28),headY-sw(16),.36,Math.sin(frame*.05)*.018,.5,.25);
+  if(spriteReady(p.hairSideLeft))part(p.hairSideLeft,look-sw(28),headY-sw(6),.34,-Math.sin(frame*.05)*.014,.5,.25);
+  if(spriteReady(p.hairSideRight))part(p.hairSideRight,look+sw(20),headY-sw(4),.34,Math.sin(frame*.05)*.014,.5,.25);
+  part(p.hat,look,headY-sw(67),.40,Math.sin(frame*.035)*.01,.5,.55);
+
+  // Tiny expression accent for look-around mode.
+  if(!moving && idleMode==='look'){
+    ctx.save();
+    ctx.strokeStyle='rgba(247,231,160,.85)';
+    ctx.lineWidth=Math.max(.8,1.1*cs());
+    ctx.beginPath();
+    ctx.arc(look+sw(20),headY+sw(41),sw(4),-.8,.5);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  ctx.restore();
+  return true;
+}
+
 function drawWitch(){
+  if(MODULAR_WITCH_ENABLED && drawModularWitch())return;
   const moving=witch.moving;
   const step=witch.step||0;
   const stepA=Math.sin(step);
