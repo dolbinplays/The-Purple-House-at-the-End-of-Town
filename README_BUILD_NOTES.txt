@@ -1,15 +1,16 @@
 The Purple House at the End of Town
-v0.26.06.16.1447 - Witch Debug Viewer
+v0.26.06.16.1518 - Witch Composite Pose and Cozy Walk Tuning
 
 Patch focus:
-- Adds a toggleable Witch Model Debug Viewer for inspecting the current assembled witch model while playing.
-- Adds a Witch Debug button in the floating button group near Rumor Board and Journal.
-- The viewer opens in the lower-left corner of the game screen and closes when the same button is clicked again.
-- The viewer uses a separate 280x280 canvas with a plain white background.
-- It renders the current cached assembled witch model at approximately 2x normal gameplay size.
-- It updates live while the witch idles, blinks, walks, and changes facing state.
-- It shows status text for facing direction, moving true/false, speed, animation step, and frame.
-- It includes a faint baseline/centerline to help screen recordings show foot grounding and sliding.
+- Retunes the cached assembled witch composite so the face is less buried by the hat.
+- Moves/reduces the hat slightly and keeps hair/face connected.
+- Reduces wand visibility and adds tiny baked gold/body accents to improve readability at map scale.
+- Replaces heavy eyelid PNG blink with a simple canvas-drawn curved-line blink.
+- Adds stable cached walk frames: normal, blink, walkA, and walkB.
+- Uses tiny boot/arm offsets in walkA/walkB to reduce skating without returning to loose paper-doll animation.
+- Slows cozy walking by reducing acceleration, adding a max velocity clamp, and reducing step advancement.
+- Retunes footstep cadence so it should feel less skittery.
+- Updates the Witch Debug Viewer status to show zoom and cached frame mode.
 
 Preserved systems:
 - Movement controls and interaction detection
@@ -22,7 +23,8 @@ Preserved systems:
 - Expanded Journal/Rumor Board and journal tabs
 - Audio mixer, music/SFX toggles/sliders, music crossfade, WebAudio SFX
 - Save/load migration
+- Witch Debug Viewer
 
 Known limitations:
-- The viewer reflects the current stable front-facing cached witch model. It does not create new side/back witch art.
-- The debug panel is intentionally a development aid and may overlap lower-left gameplay if left open.
+- The witch still uses a front-facing cached model for all directions.
+- True side/back motion will need dedicated side/back artwork or separate directional composites later.
