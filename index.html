@@ -123,7 +123,7 @@ button:disabled{opacity:.52;filter:grayscale(.4);cursor:not-allowed}
   <div id="gameBox">
     <canvas id="c"></canvas>
     <div id="hud">
-      <div class="pill" id="versionPill">v0.26.06.16.1548 - Premium Witch Walk Feel</div>
+      <div class="pill" id="versionPill">v0.26.06.16.1626 - Witch Hand Visibility and Silhouette Polish</div>
       <div class="pill" id="dayPill">Day 1</div>
       <div class="pill" id="timePill">Morning</div>
       <div class="pill" id="coinPill">Coins 12</div>
@@ -166,7 +166,7 @@ button:disabled{opacity:.52;filter:grayscale(.4);cursor:not-allowed}
   </div>
   <aside id="side">
     <h1>The Purple House<br>at the End of Town</h1>
-    <p class="small">v0.26.06.16.1548 - Premium Witch Walk Feel. Improves witch face readability, strengthens stable walk frames, adds tiny weight transfer, polishes blink timing, and upgrades the Witch Debug Viewer with zoom, pause, frame-step, and foot/origin markers.</p>
+    <p class="small">v0.26.06.16.1626 - Witch Hand Visibility and Silhouette Polish. Improves witch hand visibility, arm layer readability, walk-frame arm contribution, silhouette clarity, and debug viewer hand/shoulder markers.</p>
     <h2>Audio</h2><div id="audioControls">
   <button class="secondary sectionButton" id="audioToggle" onclick="toggleAudio()">Enable All Audio</button>
   <div class="audioRow">
@@ -191,8 +191,8 @@ button:disabled{opacity:.52;filter:grayscale(.4);cursor:not-allowed}
   </aside>
 </div>
 <script>
-const BUILD_VERSION='v0.26.06.16.1548';
-const BUILD_SUMMARY='Premium Witch Walk Feel';
+const BUILD_VERSION='v0.26.06.16.1626';
+const BUILD_SUMMARY='Witch Hand Visibility and Silhouette Polish';
 const BUILD_LABEL=BUILD_VERSION+' - '+BUILD_SUMMARY;
 const SAVE_KEY='purpleHouse_'+BUILD_VERSION;
 const WORLD_W=1672, WORLD_H=941;
@@ -366,30 +366,32 @@ const MODULAR_WITCH_ENABLED=true;
 // and draws that assembled sprite as one character. This avoids the exploded
 // paper-doll look caused by independently moving each part during gameplay.
 const STABLE_WITCH_MODEL={normal:null,blink:null,walkA:null,walkB:null,ready:false,w:220,h:260};
-// Premium walk-feel tuning. Cached frames keep the witch stable as a coherent
-// model, while walkA/walkB now include more readable but still tiny pose shifts.
+// Hand Visibility + Premium Silhouette tuning. The sleeves remain integrated
+// with the coat, then a small front hand/cuff overlay pass restores readable
+// hands without returning to loose runtime paper-doll animation.
 const STABLE_WITCH_PARTS=[
   // name, image key, x, y, w, h, alpha, rotation degrees
   ['hairBack','hairBack',47,67,126,80,.88,0],
   ['legLeft','legLeft',77,175,47,29,.88,0],
   ['bootLeft','bootLeft',77,193,33,50,1,0],
   ['bootRight','bootRight',113,193,39,50,1,0],
-  ['armRight','armRight',133,118,40,51,.96,-6],
-  ['armLeft','armLeft',44,128,50,25,.96,4],
+
+  // Sleeve/base-arm pass sits behind the coat for depth.
+  ['armRight','armRight',131,119,43,52,.76,-7],
+  ['armLeft','armLeft',43,128,52,26,.76,4],
+
   ['hips','hips',69,151,82,51,1,0],
   ['body','body',53,108,119,108,1,0],
-  ['capeLeft','capeLeft',48,136,44,47,.32,0],
-  ['capeRight','capeRight',131,136,44,47,.32,0],
+  ['capeLeft','capeLeft',48,136,44,47,.30,0],
+  ['capeRight','capeRight',131,136,44,47,.30,0],
   ['skirtFront','skirtFront',57,155,109,64,.66,0],
   ['faceOpen','faceOpen',73,73,74,61,1,0],
   ['hairFront','hairFront',58,50,104,64,1,0],
   ['hairSideLeft','hairSideLeft',56,84,34,32,.86,0],
   ['hairSideRight','hairSideRight',135,84,28,33,.86,0],
   ['hairSideLong','hairSideLong',134,72,42,34,.74,0],
-  // Hat moved a touch upward and reduced so the brim crowds the eyes less.
   ['hat','hat',45,5,130,69,.95,0],
-  // Wand stays present but subdued to avoid silhouette noise.
-  ['wand','wand',42,153,52,11,.24,-4]
+  ['wand','wand',42,153,52,11,.18,-4]
 ];
 const STABLE_WITCH_WALK_DELTAS={
   normal:{},
@@ -399,17 +401,37 @@ const STABLE_WITCH_WALK_DELTAS={
     bootLeft:{x:-4,y:3,rot:-5},
     bootRight:{x:3,y:-2,rot:3},
     legLeft:{x:-2,y:2},
-    armLeft:{x:2,y:0,rot:-4},
-    armRight:{x:-2,y:0,rot:4}
+    armLeft:{x:3,y:1,rot:-5},
+    armRight:{x:-3,y:0,rot:5}
   },
   walkB:{
     hips:{x:1,y:0}, body:{x:1,y:0}, skirtFront:{x:1,y:0},
     bootLeft:{x:3,y:-2,rot:3},
     bootRight:{x:-4,y:3,rot:-5},
     legLeft:{x:2,y:0},
-    armLeft:{x:-2,y:0,rot:4},
-    armRight:{x:2,y:0,rot:-4}
+    armLeft:{x:-3,y:0,rot:5},
+    armRight:{x:3,y:1,rot:-5}
   }
+};
+// Front hand/cuff overlays: x/y are in composite pixels. They are drawn after
+// the coat/skirt so the hands read at gameplay scale.
+const STABLE_WITCH_HANDS={
+  normal:[
+    {name:'leftHand',x:49,y:151,w:16,h:10,rot:-19,skin:'#f0c4a6',cuff:'#6f45a0'},
+    {name:'rightHand',x:171,y:148,w:15,h:10,rot:18,skin:'#f0c4a6',cuff:'#6f45a0'}
+  ],
+  blink:[
+    {name:'leftHand',x:49,y:151,w:16,h:10,rot:-19,skin:'#f0c4a6',cuff:'#6f45a0'},
+    {name:'rightHand',x:171,y:148,w:15,h:10,rot:18,skin:'#f0c4a6',cuff:'#6f45a0'}
+  ],
+  walkA:[
+    {name:'leftHand',x:52,y:153,w:16,h:10,rot:-25,skin:'#f0c4a6',cuff:'#6f45a0'},
+    {name:'rightHand',x:168,y:147,w:15,h:10,rot:13,skin:'#f0c4a6',cuff:'#6f45a0'}
+  ],
+  walkB:[
+    {name:'leftHand',x:46,y:150,w:16,h:10,rot:-12,skin:'#f0c4a6',cuff:'#6f45a0'},
+    {name:'rightHand',x:174,y:151,w:15,h:10,rot:25,skin:'#f0c4a6',cuff:'#6f45a0'}
+  ]
 };
 function clearStableWitchCache(){
   STABLE_WITCH_MODEL.normal=null;
@@ -428,8 +450,40 @@ function drawCachedPart(g,img,x,y,w,h,alpha=1,rotDeg=0){
   g.restore();
   return true;
 }
+function drawCompositeHand(g,h){
+  // Hybrid overlay: cuff first, then warm skin-tone hand with a small outline.
+  g.save();
+  g.translate(h.x,h.y);
+  g.rotate((h.rot||0)*Math.PI/180);
+
+  g.fillStyle=h.cuff||'#6f45a0';
+  g.strokeStyle='rgba(29,18,35,.76)';
+  g.lineWidth=1.15;
+  g.beginPath();
+  g.roundRect(-h.w*.72,-h.h*.42,h.w*.66,h.h*.82,3);
+  g.fill();
+  g.stroke();
+
+  g.fillStyle=h.skin||'#f0c4a6';
+  g.strokeStyle='rgba(74,36,43,.82)';
+  g.lineWidth=1.05;
+  g.beginPath();
+  g.ellipse(0,0,h.w*.55,h.h*.46,0,0,Math.PI*2);
+  g.fill();
+  g.stroke();
+
+  // tiny finger suggestion; visible in debug, subtle in-game
+  g.strokeStyle='rgba(120,67,65,.48)';
+  g.lineWidth=.75;
+  g.beginPath();
+  g.moveTo(h.w*.08,-h.h*.34);
+  g.quadraticCurveTo(h.w*.26,-h.h*.04,h.w*.48,-h.h*.05);
+  g.moveTo(h.w*.08,h.h*.30);
+  g.quadraticCurveTo(h.w*.27,h.h*.06,h.w*.50,h.h*.12);
+  g.stroke();
+  g.restore();
+}
 function drawCanvasBlink(g){
-  // Shorter, lighter blink lines placed over the visible eyes.
   g.save();
   g.strokeStyle='rgba(34,19,38,.82)';
   g.lineWidth=1.7;
@@ -473,16 +527,19 @@ function buildStableWitchComposite(mode='normal'){
     drawCachedPart(g,p[key],x+(d.x||0),y+(d.y||0),w,h,alpha,(rot||0)+(d.rot||0));
   }
 
+  // Front hand pass after body/skirt makes the silhouette read as a living character.
+  for(const h of (STABLE_WITCH_HANDS[mode]||STABLE_WITCH_HANDS.normal))drawCompositeHand(g,h);
+
   // Small baked accents improve coat/skirt readability without changing game logic.
   g.save();
-  g.globalAlpha=.48;
+  g.globalAlpha=.46;
   g.strokeStyle='#d9b465';
   g.lineWidth=1.35;
   g.beginPath();
   g.moveTo(83,159);
   g.lineTo(137,159);
   g.stroke();
-  g.globalAlpha=.30;
+  g.globalAlpha=.28;
   g.strokeStyle='#f4d58a';
   g.beginPath();
   g.moveTo(107,121);
@@ -603,12 +660,21 @@ function renderWitchDebugViewer(){
       g.lineTo(cw/2,ch-16);
       g.stroke();
 
-      // Origin and rough foot-contact dots.
+      // Origin, rough foot-contact, shoulder, and hand markers.
       g.fillStyle='rgba(210,40,40,.78)';
       g.beginPath(); g.arc(cx,groundY,3,0,Math.PI*2); g.fill();
       g.fillStyle='rgba(40,90,220,.78)';
       g.beginPath(); g.arc(cx-22*(witchDebugZoom/2),groundY-4,3,0,Math.PI*2); g.fill();
       g.beginPath(); g.arc(cx+22*(witchDebugZoom/2),groundY-4,3,0,Math.PI*2); g.fill();
+
+      const scale=drawW/STABLE_WITCH_MODEL.w;
+      const baseX=cx-drawW/2,baseY=groundY-drawH+10*witchDebugZoom;
+      const hands=STABLE_WITCH_HANDS[frameMode]||STABLE_WITCH_HANDS.normal;
+      g.fillStyle='rgba(20,150,80,.82)';
+      for(const h of hands){g.beginPath();g.arc(baseX+h.x*scale,baseY+h.y*scale,3.5,0,Math.PI*2);g.fill();}
+      g.fillStyle='rgba(170,60,210,.78)';
+      g.beginPath();g.arc(baseX+72*scale,baseY+126*scale,3.5,0,Math.PI*2);g.fill();
+      g.beginPath();g.arc(baseX+148*scale,baseY+126*scale,3.5,0,Math.PI*2);g.fill();
 
       g.strokeStyle='rgba(0,0,0,.18)';
       g.strokeRect(cx-drawW/2,groundY-drawH+10*witchDebugZoom,drawW,drawH);
@@ -630,7 +696,7 @@ function renderWitchDebugViewer(){
     witchDebugStatus.textContent=
       `facing: ${witch.facing||'down'}   moving: ${witch.moving?'true':'false'}   debug: ${witchDebugPaused?'paused':'live'}\n`+
       `speed: ${witch.speed.toFixed(3)}   step: ${(witch.step||0).toFixed(2)}   frame: ${frame}\n`+
-      `cached frame: ${frameMode}   markers: ${witchDebugMarkers?'on':'off'}`;
+      `cached frame: ${frameMode}   markers: ${witchDebugMarkers?'hands/feet/on':'off'}`;
   }
 }
 
