@@ -76,7 +76,7 @@ button:disabled{opacity:.52;filter:grayscale(.4);cursor:not-allowed}
   <div id="gameBox">
     <canvas id="c"></canvas>
     <div id="hud">
-      <div class="pill" id="versionPill">v0.26.06.16.0955 - Modular Witch Sprite Assembly and Movement Animation</div>
+      <div class="pill" id="versionPill">v0.26.06.16.1042 - Modular Witch Rig Alignment Fix</div>
       <div class="pill" id="dayPill">Day 1</div>
       <div class="pill" id="timePill">Morning</div>
       <div class="pill" id="coinPill">Coins 12</div>
@@ -107,7 +107,7 @@ button:disabled{opacity:.52;filter:grayscale(.4);cursor:not-allowed}
   </div>
   <aside id="side">
     <h1>The Purple House<br>at the End of Town</h1>
-    <p class="small">v0.26.06.16.0955 - Modular Witch Sprite Assembly and Movement Animation. Modular layered witch avatar using cut-up sprite parts, with idle breathing, walking bob, blink, look-around, and fidget animation while preserving the existing cozy witch-life systems.</p>
+    <p class="small">v0.26.06.16.1042 - Modular Witch Rig Alignment Fix. Rig alignment fix for the modular witch avatar: tighter head/hat/hair anchors, grounded boots, reduced skirt scale, gentler animation, and procedural fallback for side/up movement.</p>
     <h2>Audio</h2><div id="audioControls">
   <button class="secondary sectionButton" id="audioToggle" onclick="toggleAudio()">Enable All Audio</button>
   <div class="audioRow">
@@ -132,8 +132,8 @@ button:disabled{opacity:.52;filter:grayscale(.4);cursor:not-allowed}
   </aside>
 </div>
 <script>
-const BUILD_VERSION='v0.26.06.16.0955';
-const BUILD_SUMMARY='Modular Witch Sprite Assembly and Movement Animation';
+const BUILD_VERSION='v0.26.06.16.1042';
+const BUILD_SUMMARY='Modular Witch Rig Alignment Fix';
 const BUILD_LABEL=BUILD_VERSION+' - '+BUILD_SUMMARY;
 const SAVE_KEY='purpleHouse_'+BUILD_VERSION;
 const WORLD_W=1672, WORLD_H=941;
@@ -200,6 +200,8 @@ const SpriteArt={
     hairSideLong:loadSprite('assets/sprites/witch_parts/hair_side_front_right_long.png'),
     faceOpen:loadSprite('assets/sprites/witch_parts/face_open_smile.png'),
     faceBlink:loadSprite('assets/sprites/witch_parts/face_closed_o_mouth.png'),
+    eyelidLeft:loadSprite('assets/sprites/witch_parts/eyelid_left.png'),
+    eyelidRight:loadSprite('assets/sprites/witch_parts/eyelid_right.png'),
     body:loadSprite('assets/sprites/witch_parts/torso_coat.png'),
     hips:loadSprite('assets/sprites/witch_parts/hips_shorts_belt.png'),
     skirtBack:loadSprite('assets/sprites/witch_parts/skirt_back_long.png'),
@@ -297,36 +299,74 @@ function witchPartsReady(){
 }
 
 const MODULAR_WITCH_ENABLED=true;
-// Modular Witch Sprite Assembly Pass.
-// Draws the player witch from cut-up transparent PNG layers. If the images are
-// unavailable, the older procedural avatar remains as a safe fallback.
+// Modular Witch Rig Alignment Fix.
+// These values are intentionally centralized for future tuning. Coordinates are
+// in witch-local "world pixels" from the ground point between the boots.
+// x/y place each part's pivot; scale is applied relative to the source PNG.
+const WITCH_PART_LAYOUT={
+  // lower body / grounding
+  skirtBack:{x:0,y:-24,scale:.34,pivotX:.5,pivotY:.24,alpha:.80},
+  bootLeft:{x:-10,y:14,scale:.42,pivotX:.50,pivotY:.80},
+  bootRight:{x:11,y:14,scale:.42,pivotX:.50,pivotY:.80},
+  legLeft:{x:-2,y:2,scale:.25,pivotX:.50,pivotY:.45,alpha:.68},
+  hips:{x:0,y:-20,scale:.52,pivotX:.50,pivotY:.50},
+  body:{x:0,y:-52,scale:.58,pivotX:.50,pivotY:.55},
+  capeLeft:{x:-22,y:-43,scale:.30,pivotX:.50,pivotY:.38,alpha:.72},
+  capeRight:{x:22,y:-43,scale:.30,pivotX:.50,pivotY:.38,alpha:.72},
+  skirtFront:{x:0,y:-25,scale:.37,pivotX:.50,pivotY:.22,alpha:.88},
+
+  // shoulders / hands
+  armRight:{x:28,y:-57,scale:.29,pivotX:.50,pivotY:.18},
+  armLeft:{x:-27,y:-55,scale:.29,pivotX:.50,pivotY:.22},
+  wand:{x:-38,y:-43,scale:.26,pivotX:.18,pivotY:.50,alpha:.72},
+
+  // head group. Keep these tightly clustered so hat/hair/face read as one head.
+  faceOpen:{x:0,y:-91,scale:.62,pivotX:.50,pivotY:.50},
+  faceBlink:{x:0,y:-91,scale:.68,pivotX:.50,pivotY:.50},
+  hairBack:{x:0,y:-100,scale:.34,pivotX:.50,pivotY:.48,alpha:.96},
+  hairFront:{x:0,y:-108,scale:.43,pivotX:.50,pivotY:.46},
+  hairSideLong:{x:21,y:-101,scale:.28,pivotX:.50,pivotY:.28,alpha:.92},
+  hairSideLeft:{x:-20,y:-96,scale:.26,pivotX:.50,pivotY:.24,alpha:.90},
+  hairSideRight:{x:19,y:-96,scale:.26,pivotX:.50,pivotY:.24,alpha:.90},
+  hat:{x:0,y:-126,scale:.33,pivotX:.50,pivotY:.58}
+};
 function drawModularWitch(){
   const p=SpriteArt.witchParts||{};
-  const required=[p.hat,p.hairBack,p.hairFront,p.faceOpen,p.faceBlink,p.body,p.hips,p.skirtBack,p.skirtFront,p.bootLeft,p.bootRight,p.armLeft,p.armRight];
+  const required=[p.hat,p.hairBack,p.hairFront,p.faceOpen,p.faceBlink,p.body,p.hips,p.skirtFront,p.bootLeft,p.bootRight,p.armLeft,p.armRight];
   if(!required.every(spriteReady))return false;
 
   const moving=witch.moving;
+  // The current cut-up art is a front-facing rig. Use the older procedural
+  // directional witch for side/up movement until proper modular side/back poses exist.
+  if(moving && witch.facing!=='down')return false;
+
   const step=witch.step||0;
   const stepA=Math.sin(step);
   const counter=Math.sin(step+Math.PI);
   const idleMode=witch.idleMode;
   const idleClock=witch.idleClock||0;
-  const blink=(frame%205)>197 || (!moving && frame%360>350);
-  const bob=moving?Math.abs(stepA)*sw(4.6):Math.sin(frame*.06)*sw(1.5);
-  const sway=moving?Math.sin(step)*0.025:Math.sin(frame*.035)*0.008;
-  const look=(!moving&&idleMode==='look')?Math.sin(idleClock*.09)*sw(3.8):0;
+  const blink=(frame%220)>214 || (!moving && frame%380>374);
+  const bob=moving?Math.abs(stepA)*sw(1.55):Math.sin(frame*.06)*sw(.75);
+  const sway=moving?Math.sin(step)*0.010:Math.sin(frame*.035)*0.004;
+  const look=(!moving&&idleMode==='look')?Math.sin(idleClock*.09)*sw(1.4):0;
   const watchMode=!moving && idleMode==='watch';
   const x=sx(witch.x), y=sy(witch.y)+bob;
-  const dir=(witch.facing==='left')?-1:1;
-  const mirrorSide=(witch.facing==='left'||witch.facing==='right');
   const spriteS=cs()*.255;
 
-  function part(img,x0,y0,scale=1,rot=0,ax=.5,ay=.5,alpha=1){
-    if(!spriteReady(img))return false;
-    const w=img.naturalWidth*spriteS*scale, h=img.naturalHeight*spriteS*scale;
+  function drawPart(img,layout,extra={}){
+    if(!spriteReady(img)||!layout)return false;
+    const sx0=(layout.x+(extra.x||0))*cs();
+    const sy0=(layout.y+(extra.y||0))*cs();
+    const scale=(layout.scale||1)*(extra.scale||1);
+    const w=img.naturalWidth*spriteS*scale;
+    const h=img.naturalHeight*spriteS*scale;
+    const rot=(layout.rot||0)+(extra.rot||0);
+    const ax=('pivotX' in layout?layout.pivotX:.5);
+    const ay=('pivotY' in layout?layout.pivotY:.5);
+    const alpha=('alpha' in extra?extra.alpha:('alpha' in layout?layout.alpha:1));
     ctx.save();
     ctx.globalAlpha=alpha;
-    ctx.translate(x0,y0);
+    ctx.translate(sx0,sy0);
     ctx.rotate(rot);
     ctx.drawImage(img,-w*ax,-h*ay,w,h);
     ctx.restore();
@@ -336,71 +376,63 @@ function drawModularWitch(){
   ctx.save();
   ctx.fillStyle='rgba(0,0,0,.25)';
   ctx.beginPath();
-  ctx.ellipse(x,y+sw(22),sw(28),sw(10),0,0,Math.PI*2);
+  ctx.ellipse(x,y+sw(21),sw(24),sw(7.5),0,0,Math.PI*2);
   ctx.fill();
 
   ctx.translate(x,y);
-  if(mirrorSide)ctx.scale(dir,1);
   ctx.rotate(sway);
 
-  // Back / ground layers.
-  part(p.skirtBack,0,-sw(31),.72,0,.5,.18,.94);
-  part(p.hairBack,0,-sw(98),.52,Math.sin(frame*.035)*0.012,.5,.43,.98);
+  // BODY GROUP: feet stay close to the ground while the upper body breathes.
+  const footShift= moving ? sw(1.5) : 0;
+  drawPart(p.skirtBack,WITCH_PART_LAYOUT.skirtBack,{rot:Math.sin(frame*.035)*0.003});
+  drawPart(p.bootLeft,WITCH_PART_LAYOUT.bootLeft,{x:counter*footShift/cs(),rot:counter*.025});
+  drawPart(p.bootRight,WITCH_PART_LAYOUT.bootRight,{x:stepA*footShift/cs(),rot:-stepA*.025});
+  if(spriteReady(p.legLeft))drawPart(p.legLeft,WITCH_PART_LAYOUT.legLeft,{x:counter*.8,alpha:.60});
+  drawPart(p.hips,WITCH_PART_LAYOUT.hips);
+  drawPart(p.body,WITCH_PART_LAYOUT.body);
+  drawPart(p.capeLeft,WITCH_PART_LAYOUT.capeLeft,{rot:Math.sin(frame*.04)*0.004});
+  drawPart(p.capeRight,WITCH_PART_LAYOUT.capeRight,{rot:-Math.sin(frame*.04)*0.004});
 
-  // Feet and lower body. These shift against one another while walking.
-  part(p.bootLeft,-sw(18)+counter*sw(5),sw(15),.47,counter*.08,.5,.58);
-  part(p.bootRight,sw(17)+stepA*sw(5),sw(16),.47,-stepA*.08,.5,.58);
-  if(spriteReady(p.legLeft))part(p.legLeft,-sw(4)+counter*sw(3),-sw(1),.34,counter*.05,.5,.5,.9);
-  part(p.hips,0,-sw(23),.43,0,.5,.45);
-
-  // Torso and cape/cloth layers.
-  part(p.body,0,-sw(62),.45,0,.5,.55);
-  part(p.capeLeft,-sw(30),-sw(45),.38,Math.sin(frame*.045)*.018,.5,.45,.9);
-  part(p.capeRight,sw(30),-sw(45),.38,-Math.sin(frame*.045)*.018,.5,.45,.9);
-
-  // Arms. Watch/fidget mode raises the forward arm and adds a small watch circle.
-  const armLift=watchMode?-sw(12):0;
-  part(p.armRight,sw(32),-sw(54)+armLift,.36,-0.10-stepA*.08,.5,.18);
-  part(p.armLeft,-sw(29),-sw(50),.36,0.08+stepA*.10,.5,.22);
+  // ARMS: kept subtle and attached near the shoulders. Wand is hidden while walking.
+  const armSwing=moving?stepA*.035:Math.sin(frame*.04)*.010;
+  const watchLift=watchMode?-5:0;
+  drawPart(p.armRight,WITCH_PART_LAYOUT.armRight,{y:watchLift,rot:-0.018-armSwing});
+  drawPart(p.armLeft,WITCH_PART_LAYOUT.armLeft,{rot:0.014+armSwing});
+  if(!moving && spriteReady(p.wand))drawPart(p.wand,WITCH_PART_LAYOUT.wand,{rot:Math.sin(frame*.05)*0.008});
   if(watchMode){
     ctx.save();
     ctx.strokeStyle='#d9b465';
-    ctx.lineWidth=Math.max(.8,1.1*cs());
+    ctx.lineWidth=Math.max(.8,1.0*cs());
     ctx.beginPath();
-    ctx.arc(sw(42),-sw(55),sw(4.8),0,Math.PI*2);
+    ctx.arc(sw(33),-sw(56),sw(3.9),0,Math.PI*2);
     ctx.stroke();
     ctx.beginPath();
-    ctx.moveTo(sw(42),-sw(55));
-    ctx.lineTo(sw(42),-sw(58));
-    ctx.moveTo(sw(42),-sw(55));
-    ctx.lineTo(sw(45),-sw(54));
+    ctx.moveTo(sw(33),-sw(56)); ctx.lineTo(sw(33),-sw(58.3));
+    ctx.moveTo(sw(33),-sw(56)); ctx.lineTo(sw(35.2),-sw(55.2));
     ctx.stroke();
     ctx.restore();
   }
-  if(spriteReady(p.wand))part(p.wand,-sw(38),-sw(35),.35,-0.10+Math.sin(frame*.05)*.025,.18,.5,.92);
 
-  // Front skirt after arms/body to tie the paper doll together.
-  part(p.skirtFront,0,-sw(28),.59,0,.5,.18,.96);
+  drawPart(p.skirtFront,WITCH_PART_LAYOUT.skirtFront);
 
-  // Head / face layers.
-  const headY=-sw(115)-Math.sin(frame*.055)*sw(.7);
-  const faceImg=blink?p.faceBlink:p.faceOpen;
-  part(faceImg,look,headY,.43,0,.5,.5);
+  // HEAD GROUP: one shared offset so face, hair, and hat stay attached.
+  ctx.save();
+  ctx.translate(look, -Math.sin(frame*.055)*sw(.25));
+  drawPart(p.hairBack,WITCH_PART_LAYOUT.hairBack);
+  drawPart(blink?p.faceBlink:p.faceOpen,blink?WITCH_PART_LAYOUT.faceBlink:WITCH_PART_LAYOUT.faceOpen);
+  drawPart(p.hairFront,WITCH_PART_LAYOUT.hairFront,{rot:Math.sin(frame*.04)*0.003});
+  if(spriteReady(p.hairSideLong))drawPart(p.hairSideLong,WITCH_PART_LAYOUT.hairSideLong,{rot:Math.sin(frame*.05)*0.004});
+  if(spriteReady(p.hairSideLeft))drawPart(p.hairSideLeft,WITCH_PART_LAYOUT.hairSideLeft,{rot:-Math.sin(frame*.05)*0.003});
+  if(spriteReady(p.hairSideRight))drawPart(p.hairSideRight,WITCH_PART_LAYOUT.hairSideRight,{rot:Math.sin(frame*.05)*0.003});
+  drawPart(p.hat,WITCH_PART_LAYOUT.hat,{rot:Math.sin(frame*.035)*0.003});
+  ctx.restore();
 
-  // Hair and hat finish the silhouette.
-  part(p.hairFront,look,headY-sw(28),.45,Math.sin(frame*.04)*.012,.5,.45);
-  if(spriteReady(p.hairSideLong))part(p.hairSideLong,look+sw(28),headY-sw(16),.36,Math.sin(frame*.05)*.018,.5,.25);
-  if(spriteReady(p.hairSideLeft))part(p.hairSideLeft,look-sw(28),headY-sw(6),.34,-Math.sin(frame*.05)*.014,.5,.25);
-  if(spriteReady(p.hairSideRight))part(p.hairSideRight,look+sw(20),headY-sw(4),.34,Math.sin(frame*.05)*.014,.5,.25);
-  part(p.hat,look,headY-sw(67),.40,Math.sin(frame*.035)*.01,.5,.55);
-
-  // Tiny expression accent for look-around mode.
   if(!moving && idleMode==='look'){
     ctx.save();
-    ctx.strokeStyle='rgba(247,231,160,.85)';
-    ctx.lineWidth=Math.max(.8,1.1*cs());
+    ctx.strokeStyle='rgba(247,231,160,.72)';
+    ctx.lineWidth=Math.max(.8,1.0*cs());
     ctx.beginPath();
-    ctx.arc(look+sw(20),headY+sw(41),sw(4),-.8,.5);
+    ctx.arc(look+sw(18),-sw(77),sw(3.2),-.8,.5);
     ctx.stroke();
     ctx.restore();
   }
@@ -408,7 +440,6 @@ function drawModularWitch(){
   ctx.restore();
   return true;
 }
-
 function drawWitch(){
   if(MODULAR_WITCH_ENABLED && drawModularWitch())return;
   const moving=witch.moving;
