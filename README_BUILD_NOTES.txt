@@ -1,16 +1,20 @@
 The Purple House at the End of Town
-v0.26.06.16.1518 - Witch Composite Pose and Cozy Walk Tuning
+v0.26.06.16.1548 - Premium Witch Walk Feel
 
 Patch focus:
-- Retunes the cached assembled witch composite so the face is less buried by the hat.
-- Moves/reduces the hat slightly and keeps hair/face connected.
-- Reduces wand visibility and adds tiny baked gold/body accents to improve readability at map scale.
-- Replaces heavy eyelid PNG blink with a simple canvas-drawn curved-line blink.
-- Adds stable cached walk frames: normal, blink, walkA, and walkB.
-- Uses tiny boot/arm offsets in walkA/walkB to reduce skating without returning to loose paper-doll animation.
-- Slows cozy walking by reducing acceleration, adding a max velocity clamp, and reducing step advancement.
-- Retunes footstep cadence so it should feel less skittery.
-- Updates the Witch Debug Viewer status to show zoom and cached frame mode.
+- Retunes the cached witch composite so the hat is slightly higher/smaller and the face has more breathing room.
+- Strengthens stable walkA/walkB frame differences while keeping the cached model coherent.
+- Adds tiny whole-sprite weight transfer: small side shift, gentle settle, and reduced float.
+- Keeps movement speed responsive while syncing step cadence better to the walk frames.
+- Polishes canvas blink timing and line weight.
+- Upgrades the Witch Debug Viewer:
+  - wider/taller panel
+  - 300x300 canvas
+  - pause debug animation
+  - frame-step button
+  - 2x/3x zoom toggle
+  - origin/foot-contact/bounding-box markers toggle
+  - clearer cached-frame status readout
 
 Preserved systems:
 - Movement controls and interaction detection
@@ -26,5 +30,5 @@ Preserved systems:
 - Witch Debug Viewer
 
 Known limitations:
-- The witch still uses a front-facing cached model for all directions.
-- True side/back motion will need dedicated side/back artwork or separate directional composites later.
+- The witch still uses a front-facing cached composite for all directions.
+- Premium side/back movement will eventually need dedicated directional art or separate cached directional composites.
