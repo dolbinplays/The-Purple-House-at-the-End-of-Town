@@ -1,16 +1,22 @@
 The Purple House at the End of Town
-v0.26.06.16.1626 - Witch Hand Visibility and Silhouette Polish
+v0.26.06.16.1718 - Witch Sleeve Anchor Hand Alignment
 
 Patch focus:
-- Improves hand visibility and arm readability on the cached witch composite.
-- Keeps sleeve/base-arm sprites partly behind the coat for depth.
-- Adds a front hand/cuff overlay pass after the coat/skirt so both hands remain readable.
-- Makes the player-left / witch-right hand clearly visible instead of buried behind clothing.
-- Makes the player-right / witch-left hand more readable while still partly tucked into the silhouette.
-- Strengthens walkA/walkB arm contribution with small counter-swing deltas.
-- Keeps the subdued wand treatment so it does not clutter the silhouette.
-- Adds hand and shoulder markers to the Witch Debug Viewer when markers are enabled.
-- Preserves the stable cached composite model and current cozy movement feel.
+- Refactors the canvas hand overlays to use explicit sleeve-mouth and hand-center anchors.
+- Retunes normal/blink hand positions so both hands sit inward/upward into the sleeve openings.
+- Retunes walkA/walkB hand anchors so hands follow sleeve-mouth positions instead of drifting away.
+- Replaces the chunky cuff block with a sleeve-mouth connector:
+  - purple sleeve extension/shadow
+  - gold cuff ring
+  - hand skin shape
+  - subtle finger detail
+  - top sleeve lip drawn over the wrist
+- Updates Witch Debug Viewer markers:
+  - shoulder markers remain purple
+  - sleeve-mouth markers are gold rings
+  - hand-center markers are green rings
+  - a line connects each sleeve mouth to its hand center
+- Preserves the current movement speed, max speed clamp, walk cadence, canvas blink, face/hat readability, and front-facing cached model approach.
 
 Preserved systems:
 - Movement controls and interaction detection
@@ -26,5 +32,5 @@ Preserved systems:
 - Witch Debug Viewer and controls
 
 Known limitations:
-- The hands are canvas-drawn overlay shapes rather than true separated painted hand sprites.
-- True premium side/back movement will still need dedicated directional art or separate cached directional composites later.
+- Hands/cuffs are still canvas-drawn overlays rather than dedicated painted hand/cuff sprites.
+- True premium directional movement will still need side/back art or separate directional cached composites later.

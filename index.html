@@ -123,7 +123,7 @@ button:disabled{opacity:.52;filter:grayscale(.4);cursor:not-allowed}
   <div id="gameBox">
     <canvas id="c"></canvas>
     <div id="hud">
-      <div class="pill" id="versionPill">v0.26.06.16.1626 - Witch Hand Visibility and Silhouette Polish</div>
+      <div class="pill" id="versionPill">v0.26.06.16.1718 - Witch Sleeve Anchor Hand Alignment</div>
       <div class="pill" id="dayPill">Day 1</div>
       <div class="pill" id="timePill">Morning</div>
       <div class="pill" id="coinPill">Coins 12</div>
@@ -166,7 +166,7 @@ button:disabled{opacity:.52;filter:grayscale(.4);cursor:not-allowed}
   </div>
   <aside id="side">
     <h1>The Purple House<br>at the End of Town</h1>
-    <p class="small">v0.26.06.16.1626 - Witch Hand Visibility and Silhouette Polish. Improves witch hand visibility, arm layer readability, walk-frame arm contribution, silhouette clarity, and debug viewer hand/shoulder markers.</p>
+    <p class="small">v0.26.06.16.1718 - Witch Sleeve Anchor Hand Alignment. Adds sleeve-mouth hand anchors, retunes hand/cuff alignment, improves sleeve connector drawing, and updates debug markers for shoulder/sleeve/hand points.</p>
     <h2>Audio</h2><div id="audioControls">
   <button class="secondary sectionButton" id="audioToggle" onclick="toggleAudio()">Enable All Audio</button>
   <div class="audioRow">
@@ -191,8 +191,8 @@ button:disabled{opacity:.52;filter:grayscale(.4);cursor:not-allowed}
   </aside>
 </div>
 <script>
-const BUILD_VERSION='v0.26.06.16.1626';
-const BUILD_SUMMARY='Witch Hand Visibility and Silhouette Polish';
+const BUILD_VERSION='v0.26.06.16.1718';
+const BUILD_SUMMARY='Witch Sleeve Anchor Hand Alignment';
 const BUILD_LABEL=BUILD_VERSION+' - '+BUILD_SUMMARY;
 const SAVE_KEY='purpleHouse_'+BUILD_VERSION;
 const WORLD_W=1672, WORLD_H=941;
@@ -415,22 +415,25 @@ const STABLE_WITCH_WALK_DELTAS={
 };
 // Front hand/cuff overlays: x/y are in composite pixels. They are drawn after
 // the coat/skirt so the hands read at gameplay scale.
+// Front hand/cuff overlays use explicit sleeve-mouth and hand-center anchors.
+// sleeveX/Y = where the sleeve opens; handX/Y = where the palm/fingers sit.
+// This keeps the hands visually seated in the sleeves across normal/walk frames.
 const STABLE_WITCH_HANDS={
   normal:[
-    {name:'leftHand',x:49,y:151,w:16,h:10,rot:-19,skin:'#f0c4a6',cuff:'#6f45a0'},
-    {name:'rightHand',x:171,y:148,w:15,h:10,rot:18,skin:'#f0c4a6',cuff:'#6f45a0'}
+    {name:'leftHand',side:'left',sleeveX:56,sleeveY:150,handX:52,handY:149,rot:-16,cuffW:17,cuffH:8,handW:15,handH:9,skin:'#f0c4a6',cuff:'#d9b465',sleeve:'#6f45a0'},
+    {name:'rightHand',side:'right',sleeveX:164,sleeveY:148,handX:168,handY:147,rot:14,cuffW:16,cuffH:8,handW:14,handH:9,skin:'#f0c4a6',cuff:'#d9b465',sleeve:'#6f45a0'}
   ],
   blink:[
-    {name:'leftHand',x:49,y:151,w:16,h:10,rot:-19,skin:'#f0c4a6',cuff:'#6f45a0'},
-    {name:'rightHand',x:171,y:148,w:15,h:10,rot:18,skin:'#f0c4a6',cuff:'#6f45a0'}
+    {name:'leftHand',side:'left',sleeveX:56,sleeveY:150,handX:52,handY:149,rot:-16,cuffW:17,cuffH:8,handW:15,handH:9,skin:'#f0c4a6',cuff:'#d9b465',sleeve:'#6f45a0'},
+    {name:'rightHand',side:'right',sleeveX:164,sleeveY:148,handX:168,handY:147,rot:14,cuffW:16,cuffH:8,handW:14,handH:9,skin:'#f0c4a6',cuff:'#d9b465',sleeve:'#6f45a0'}
   ],
   walkA:[
-    {name:'leftHand',x:52,y:153,w:16,h:10,rot:-25,skin:'#f0c4a6',cuff:'#6f45a0'},
-    {name:'rightHand',x:168,y:147,w:15,h:10,rot:13,skin:'#f0c4a6',cuff:'#6f45a0'}
+    {name:'leftHand',side:'left',sleeveX:58,sleeveY:152,handX:54,handY:152,rot:-20,cuffW:17,cuffH:8,handW:15,handH:9,skin:'#f0c4a6',cuff:'#d9b465',sleeve:'#6f45a0'},
+    {name:'rightHand',side:'right',sleeveX:161,sleeveY:147,handX:165,handY:146,rot:10,cuffW:16,cuffH:8,handW:14,handH:9,skin:'#f0c4a6',cuff:'#d9b465',sleeve:'#6f45a0'}
   ],
   walkB:[
-    {name:'leftHand',x:46,y:150,w:16,h:10,rot:-12,skin:'#f0c4a6',cuff:'#6f45a0'},
-    {name:'rightHand',x:174,y:151,w:15,h:10,rot:25,skin:'#f0c4a6',cuff:'#6f45a0'}
+    {name:'leftHand',side:'left',sleeveX:54,sleeveY:149,handX:50,handY:148,rot:-11,cuffW:17,cuffH:8,handW:15,handH:9,skin:'#f0c4a6',cuff:'#d9b465',sleeve:'#6f45a0'},
+    {name:'rightHand',side:'right',sleeveX:167,sleeveY:151,handX:171,handY:150,rot:20,cuffW:16,cuffH:8,handW:14,handH:9,skin:'#f0c4a6',cuff:'#d9b465',sleeve:'#6f45a0'}
   ]
 };
 function clearStableWitchCache(){
@@ -451,36 +454,87 @@ function drawCachedPart(g,img,x,y,w,h,alpha=1,rotDeg=0){
   return true;
 }
 function drawCompositeHand(g,h){
-  // Hybrid overlay: cuff first, then warm skin-tone hand with a small outline.
-  g.save();
-  g.translate(h.x,h.y);
-  g.rotate((h.rot||0)*Math.PI/180);
+  // Sleeve anchor connector: sleeve extension/shadow -> cuff ring -> hand -> sleeve lip.
+  // This makes the palm feel like it emerges from the sleeve opening instead of
+  // sitting as a sticker on top of the coat.
+  const dx=h.handX-h.sleeveX, dy=h.handY-h.sleeveY;
+  const angle=(h.rot||0)*Math.PI/180;
+  const cuffW=h.cuffW||16, cuffH=h.cuffH||8;
+  const handW=h.handW||15, handH=h.handH||9;
 
-  g.fillStyle=h.cuff||'#6f45a0';
-  g.strokeStyle='rgba(29,18,35,.76)';
-  g.lineWidth=1.15;
+  g.save();
+
+  // Short purple sleeve extension from sleeve mouth toward hand.
+  g.save();
+  g.translate(h.sleeveX,h.sleeveY);
+  g.rotate(angle);
+  g.fillStyle=h.sleeve||'#6f45a0';
+  g.strokeStyle='rgba(29,18,35,.72)';
+  g.lineWidth=1.0;
   g.beginPath();
-  g.roundRect(-h.w*.72,-h.h*.42,h.w*.66,h.h*.82,3);
+  g.roundRect(-cuffW*.58,-cuffH*.46,cuffW*.92,cuffH*.92,3.2);
   g.fill();
   g.stroke();
 
+  // Gold cuff ring / sleeve-mouth edge.
+  g.fillStyle=h.cuff||'#d9b465';
+  g.strokeStyle='rgba(64,35,26,.82)';
+  g.lineWidth=.95;
+  g.beginPath();
+  g.ellipse(0,0,cuffW*.39,cuffH*.47,0,0,Math.PI*2);
+  g.fill();
+  g.stroke();
+  g.restore();
+
+  // Small dark connector line in case hand center is offset from sleeve mouth.
+  g.strokeStyle='rgba(29,18,35,.34)';
+  g.lineWidth=1.2;
+  g.lineCap='round';
+  g.beginPath();
+  g.moveTo(h.sleeveX,h.sleeveY);
+  g.lineTo(h.sleeveX+dx*.62,h.sleeveY+dy*.62);
+  g.stroke();
+
+  // Skin/palm sits slightly outside but overlaps the sleeve mouth.
+  g.save();
+  g.translate(h.handX,h.handY);
+  g.rotate(angle);
   g.fillStyle=h.skin||'#f0c4a6';
   g.strokeStyle='rgba(74,36,43,.82)';
-  g.lineWidth=1.05;
+  g.lineWidth=1.0;
   g.beginPath();
-  g.ellipse(0,0,h.w*.55,h.h*.46,0,0,Math.PI*2);
+  g.ellipse(0,0,handW*.52,handH*.44,0,0,Math.PI*2);
   g.fill();
   g.stroke();
 
-  // tiny finger suggestion; visible in debug, subtle in-game
-  g.strokeStyle='rgba(120,67,65,.48)';
-  g.lineWidth=.75;
+  // Finger hints stay very light so the overlay does not look too cartoony.
+  g.strokeStyle='rgba(120,67,65,.38)';
+  g.lineWidth=.65;
   g.beginPath();
-  g.moveTo(h.w*.08,-h.h*.34);
-  g.quadraticCurveTo(h.w*.26,-h.h*.04,h.w*.48,-h.h*.05);
-  g.moveTo(h.w*.08,h.h*.30);
-  g.quadraticCurveTo(h.w*.27,h.h*.06,h.w*.50,h.h*.12);
+  g.moveTo(handW*.05,-handH*.30);
+  g.quadraticCurveTo(handW*.22,-handH*.05,handW*.44,-handH*.06);
+  g.moveTo(handW*.05,handH*.28);
+  g.quadraticCurveTo(handW*.23,handH*.05,handW*.45,handH*.10);
   g.stroke();
+  g.restore();
+
+  // Top sleeve lip partially overlaps the wrist, embedding the hand in the cuff.
+  g.save();
+  g.translate(h.sleeveX,h.sleeveY);
+  g.rotate(angle);
+  g.strokeStyle='rgba(217,180,101,.78)';
+  g.lineWidth=1.05;
+  g.lineCap='round';
+  g.beginPath();
+  g.arc(0,0,cuffW*.42,-2.7,-.43);
+  g.stroke();
+  g.strokeStyle='rgba(29,18,35,.44)';
+  g.lineWidth=.85;
+  g.beginPath();
+  g.arc(0,0,cuffW*.43,.22,2.55);
+  g.stroke();
+  g.restore();
+
   g.restore();
 }
 function drawCanvasBlink(g){
@@ -670,11 +724,26 @@ function renderWitchDebugViewer(){
       const scale=drawW/STABLE_WITCH_MODEL.w;
       const baseX=cx-drawW/2,baseY=groundY-drawH+10*witchDebugZoom;
       const hands=STABLE_WITCH_HANDS[frameMode]||STABLE_WITCH_HANDS.normal;
-      g.fillStyle='rgba(20,150,80,.82)';
-      for(const h of hands){g.beginPath();g.arc(baseX+h.x*scale,baseY+h.y*scale,3.5,0,Math.PI*2);g.fill();}
+
+      // Shoulder markers are purple dots.
       g.fillStyle='rgba(170,60,210,.78)';
       g.beginPath();g.arc(baseX+72*scale,baseY+126*scale,3.5,0,Math.PI*2);g.fill();
       g.beginPath();g.arc(baseX+148*scale,baseY+126*scale,3.5,0,Math.PI*2);g.fill();
+
+      // Sleeve-mouth markers are small gold rings; hand centers are small green rings.
+      for(const h of hands){
+        const sxm=baseX+h.sleeveX*scale, sym=baseY+h.sleeveY*scale;
+        const hxm=baseX+h.handX*scale, hym=baseY+h.handY*scale;
+        g.strokeStyle='rgba(217,150,42,.92)';
+        g.lineWidth=1.4;
+        g.beginPath();g.arc(sxm,sym,4.2,0,Math.PI*2);g.stroke();
+        g.strokeStyle='rgba(20,150,80,.92)';
+        g.lineWidth=1.4;
+        g.beginPath();g.arc(hxm,hym,3.4,0,Math.PI*2);g.stroke();
+        g.strokeStyle='rgba(20,80,40,.42)';
+        g.lineWidth=.9;
+        g.beginPath();g.moveTo(sxm,sym);g.lineTo(hxm,hym);g.stroke();
+      }
 
       g.strokeStyle='rgba(0,0,0,.18)';
       g.strokeRect(cx-drawW/2,groundY-drawH+10*witchDebugZoom,drawW,drawH);
@@ -696,7 +765,7 @@ function renderWitchDebugViewer(){
     witchDebugStatus.textContent=
       `facing: ${witch.facing||'down'}   moving: ${witch.moving?'true':'false'}   debug: ${witchDebugPaused?'paused':'live'}\n`+
       `speed: ${witch.speed.toFixed(3)}   step: ${(witch.step||0).toFixed(2)}   frame: ${frame}\n`+
-      `cached frame: ${frameMode}   markers: ${witchDebugMarkers?'hands/feet/on':'off'}`;
+      `cached frame: ${frameMode}   markers: ${witchDebugMarkers?'shoulder/sleeve/hand/feet':'off'}`;
   }
 }
 
