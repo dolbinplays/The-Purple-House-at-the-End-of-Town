@@ -69,6 +69,53 @@ button:disabled{opacity:.52;filter:grayscale(.4);cursor:not-allowed}
 .journalEntry.isNew{border-color:rgba(238,207,139,.62);box-shadow:0 0 0 1px rgba(238,207,139,.16) inset}
 .journalEntry:last-child{margin-bottom:0}.journalMeta{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:5px}.journalBadge{font-size:11px;background:rgba(217,180,101,.18);border:1px solid rgba(217,180,101,.34);color:#ffe7a6;border-radius:999px;padding:2px 7px}.journalNewBadge{background:#eecf8b;color:#251425;border-color:#ffe7a6;font-weight:1000}.journalCutscene{font-size:11px;color:#d6c9dc}.journalText{font-size:14px;line-height:1.38;color:#f7ebcf}.journalEmpty{padding:20px;text-align:center;color:#d6c9dc}.journalTools{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.journalTools button{font-size:12px;padding:7px 9px}.storyPreview{max-height:165px;overflow:auto;background:rgba(0,0,0,.16);border:1px solid rgba(255,255,255,.11);border-radius:12px;padding:7px;margin-top:6px}.storyPreview div{border-bottom:1px solid rgba(255,255,255,.08);padding:4px 0;font-size:12px}
 @media(max-width:980px){.journalHero{grid-template-columns:1fr}.journalList{max-height:46vh}}
+
+/* Witch Model Debug Viewer: dev-only sprite/model inspection panel. */
+.witchDebugViewer{
+  position:absolute;
+  left:16px;
+  bottom:16px;
+  width:320px;
+  height:396px;
+  background:#fff;
+  color:#1b1020;
+  border:2px solid #1b1020;
+  border-radius:12px;
+  z-index:7;
+  box-shadow:0 12px 30px rgba(0,0,0,.45);
+  display:none;
+  padding:8px;
+  pointer-events:auto;
+}
+.witchDebugViewer.open{display:block}
+.witchDebugViewer h3{
+  margin:0 0 6px;
+  font-size:13px;
+  line-height:1.1;
+  color:#1b1020;
+  font-family:Georgia,serif;
+}
+#witchDebugCanvas{
+  display:block;
+  width:300px;
+  height:300px;
+  background:#fff;
+  border:1px solid rgba(0,0,0,.22);
+  border-radius:8px;
+}
+.witchDebugControls{display:flex;gap:5px;flex-wrap:wrap;margin:5px 0 4px}
+.witchDebugControls button{font-size:10px;padding:4px 6px;border-radius:8px;box-shadow:none;min-width:0;text-align:center}
+#witchDebugStatus{
+  margin-top:4px;
+  font:11px/1.2 ui-monospace,SFMono-Regular,Consolas,monospace;
+  color:#1b1020;
+  white-space:pre-wrap;
+}
+#witchDebugBtn.debugOn{
+  outline:2px solid rgba(255,255,255,.72);
+  filter:brightness(1.16);
+}
+
 </style>
 </head>
 <body>
@@ -76,7 +123,7 @@ button:disabled{opacity:.52;filter:grayscale(.4);cursor:not-allowed}
   <div id="gameBox">
     <canvas id="c"></canvas>
     <div id="hud">
-      <div class="pill" id="versionPill">v0.26.05.23.1223 - Paper Doll Familiars and Pocket Watch</div>
+      <div class="pill" id="versionPill">v0.26.06.16.1718 - Witch Sleeve Anchor Hand Alignment</div>
       <div class="pill" id="dayPill">Day 1</div>
       <div class="pill" id="timePill">Morning</div>
       <div class="pill" id="coinPill">Coins 12</div>
@@ -84,6 +131,18 @@ button:disabled{opacity:.52;filter:grayscale(.4);cursor:not-allowed}
     <div class="floatBtns">
       <button id="rumorBtn" class="secondary journalLauncher" onclick="showRumors()">Rumor Board</button>
       <button id="journalBtn" class="secondary journalLauncher" onclick="villageNotesMenu()">Journal</button>
+      <button id="witchDebugBtn" class="secondary" onclick="toggleWitchDebugViewer()">Witch Debug</button>
+    </div>
+    <div id="witchDebugViewer" class="witchDebugViewer" aria-live="off">
+      <h3>Witch Model Debug View</h3>
+      <canvas id="witchDebugCanvas" width="300" height="300"></canvas>
+      <div class="witchDebugControls">
+        <button class="secondary" onclick="toggleWitchDebugPause(event)">Pause</button>
+        <button class="secondary" onclick="stepWitchDebugFrame(event)">Step</button>
+        <button class="secondary" onclick="toggleWitchDebugZoom(event)">Zoom 2x</button>
+        <button class="secondary" onclick="toggleWitchDebugMarkers(event)">Markers On</button>
+      </div>
+      <div id="witchDebugStatus">closed</div>
     </div>
     <div id="prompt"></div>
     <div class="bottomPanel">
@@ -107,7 +166,7 @@ button:disabled{opacity:.52;filter:grayscale(.4);cursor:not-allowed}
   </div>
   <aside id="side">
     <h1>The Purple House<br>at the End of Town</h1>
-    <p class="small">v0.26.05.23.1223 - Paper Doll Familiars and Pocket Watch. Paper-doll avatar and familiar build with directional witch poses, matching procedural familiars, and updated idle animation.</p>
+    <p class="small">v0.26.06.16.1718 - Witch Sleeve Anchor Hand Alignment. Adds sleeve-mouth hand anchors, retunes hand/cuff alignment, improves sleeve connector drawing, and updates debug markers for shoulder/sleeve/hand points.</p>
     <h2>Audio</h2><div id="audioControls">
   <button class="secondary sectionButton" id="audioToggle" onclick="toggleAudio()">Enable All Audio</button>
   <div class="audioRow">
@@ -132,13 +191,16 @@ button:disabled{opacity:.52;filter:grayscale(.4);cursor:not-allowed}
   </aside>
 </div>
 <script>
-const BUILD_VERSION='v0.26.05.23.1223';
-const BUILD_SUMMARY='Paper Doll Familiars and Pocket Watch';
+const BUILD_VERSION='v0.26.07.14.0130';
+const BUILD_SUMMARY='Area Framework and House Interior Slice';
 const BUILD_LABEL=BUILD_VERSION+' - '+BUILD_SUMMARY;
 const SAVE_KEY='purpleHouse_'+BUILD_VERSION;
 const WORLD_W=1672, WORLD_H=941;
 const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');
 const promptEl=document.getElementById('prompt'),modal=document.getElementById('modal'),modalCard=document.getElementById('modalCard');
+const witchDebugViewer=document.getElementById('witchDebugViewer'),witchDebugCanvas=document.getElementById('witchDebugCanvas'),witchDebugStatus=document.getElementById('witchDebugStatus'),witchDebugBtn=document.getElementById('witchDebugBtn');
+const witchDebugCtx=witchDebugCanvas?witchDebugCanvas.getContext('2d'):null;
+let witchDebugOpen=false,witchDebugPaused=false,witchDebugManualFrame=0,witchDebugZoom=2,witchDebugMarkers=true;
 let W=900,H=650,keys={},near=null,frame=0,sceneScale=1,sceneX=0,sceneY=0;
 
 const MUSIC_TRACKS=[
@@ -184,7 +246,7 @@ function playNextTrack(initial=false){if(!AudioSys.musicEnabled)return;clearTime
 function tone(freq,dur=.14,type='sine',gain=.12,when=0){if(!AudioSys.sfxEnabled)return;const ctx=ensureAudio();if(!ctx)return;const t=ctx.currentTime+when;const o=ctx.createOscillator(),g=ctx.createGain();o.type=type;o.frequency.setValueAtTime(freq,t);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(gain*AudioSys.sfxVolume*AudioSys.sfxOutputScale,t+.012);g.gain.exponentialRampToValueAtTime(.0001,t+dur);o.connect(g).connect(ctx.destination);o.start(t);o.stop(t+dur+.03);}
 function noise(dur=.18,gain=.12,filterFreq=900,when=0){if(!AudioSys.sfxEnabled)return;const ctx=ensureAudio();if(!ctx)return;const sr=ctx.sampleRate,len=Math.max(1,Math.floor(dur*sr));const buf=ctx.createBuffer(1,len,sr),data=buf.getChannelData(0);for(let i=0;i<len;i++)data[i]=(Math.random()*2-1)*(1-i/len);const src=ctx.createBufferSource();src.buffer=buf;const f=ctx.createBiquadFilter();f.type='lowpass';f.frequency.value=filterFreq;const g=ctx.createGain();g.gain.value=gain*AudioSys.sfxVolume*AudioSys.sfxOutputScale;src.connect(f).connect(g).connect(ctx.destination);src.start(ctx.currentTime+when);}
 function playSfx(kind){if(!AudioSys.sfxEnabled)return;switch(kind){case'footstep':noise(.045,.085,420);tone(95,.045,'triangle',.032,.01);break;case'ui':tone(660,.08,'triangle',.075);tone(990,.12,'sine',.055,.055);break;case'gather':tone(880,.08,'sine',.075);tone(1175,.12,'triangle',.06,.07);noise(.08,.04,1800,.02);break;case'poison':tone(196,.18,'sawtooth',.08);tone(147,.24,'triangle',.06,.05);noise(.18,.065,650);break;case'brew':tone(220,.16,'sine',.08);tone(330,.20,'triangle',.075,.08);tone(660,.34,'sine',.06,.18);noise(.25,.07,1200,.02);break;case'ghost':tone(247,.55,'sine',.085);tone(311,.65,'sine',.055,.05);noise(.6,.07,900,.02);break;case'offering':tone(523,.12,'triangle',.07);tone(784,.28,'sine',.08,.08);tone(1046,.34,'sine',.06,.16);break;case'shop':tone(740,.10,'triangle',.08);tone(988,.15,'triangle',.065,.09);break;case'choiceGood':tone(523,.12,'sine',.075);tone(659,.13,'sine',.065,.08);tone(784,.18,'sine',.065,.16);break;case'choiceDark':tone(196,.22,'sawtooth',.085);tone(98,.35,'triangle',.065,.06);noise(.25,.07,500,.03);break;case'mischief':tone(880,.08,'square',.06);tone(660,.08,'square',.055,.06);tone(990,.12,'triangle',.06,.13);break;case'upgrade':tone(392,.12,'triangle',.07);tone(523,.12,'triangle',.07,.08);tone(784,.22,'sine',.065,.18);break;case'sleep':tone(196,.28,'sine',.055);tone(174,.35,'sine',.045,.25);noise(.35,.035,350,.45);break;case'snore':tone(130,.40,'triangle',.048);noise(.45,.035,300,.05);break;case'explore':tone(294,.10,'triangle',.06);tone(392,.14,'triangle',.06,.08);noise(.12,.045,900,.04);break;case'well':tone(330,.18,'sine',.06);tone(660,.45,'sine',.06,.12);break;case'save':tone(600,.08,'triangle',.06);tone(800,.1,'triangle',.055,.07);break;case'familiar':tone(700,.08,'sine',.06);tone(900,.16,'triangle',.06,.08);break;}}
-function maybeFootstep(){if(!witch.moving||!AudioSys.sfxEnabled)return;const gap=Math.max(8,18-Math.min(8,witch.speed*1.8));if(frame-AudioSys.lastFoot>gap){AudioSys.lastFoot=frame;playSfx('footstep');}}
+function maybeFootstep(){if(!witch.moving||!AudioSys.sfxEnabled)return;const gap=Math.max(26,46-Math.min(10,witch.speed*4.0));if(frame-AudioSys.lastFoot>gap){AudioSys.lastFoot=frame;playSfx('footstep');}}
 
 const bg=new Image();
 bg.src='the_purple_witch_s_village_hub_clean.png?v=0323c';
@@ -200,6 +262,8 @@ const SpriteArt={
     hairSideLong:loadSprite('assets/sprites/witch_parts/hair_side_front_right_long.png'),
     faceOpen:loadSprite('assets/sprites/witch_parts/face_open_smile.png'),
     faceBlink:loadSprite('assets/sprites/witch_parts/face_closed_o_mouth.png'),
+    eyelidLeft:loadSprite('assets/sprites/witch_parts/eyelid_left.png'),
+    eyelidRight:loadSprite('assets/sprites/witch_parts/eyelid_right.png'),
     body:loadSprite('assets/sprites/witch_parts/torso_coat.png'),
     hips:loadSprite('assets/sprites/witch_parts/hips_shorts_belt.png'),
     skirtBack:loadSprite('assets/sprites/witch_parts/skirt_back_long.png'),
@@ -223,7 +287,7 @@ const SpriteArt={
 };
 function spriteReady(img){return img && img.complete && img.naturalWidth>0;}
 const baseRel=()=>({trust:0,fear:0,debt:0,gratitude:0,resentment:0,suspicion:0});
-const state={version:BUILD_VERSION,day:1,time:'Morning',coins:12,familiar:null,inventory:{Sunmint:2,Thornroot:1,'Grave Soil':1},stats:{Kindness:0,Power:0,Balance:0,Greed:0,Mischief:0},upgrades:{Shop:false,Attic:false,Greenhouse:false,Basement:false},servedToday:false,questIndex:0,graveRisk:0,ghostFavor:0,ghostDebt:0,prepaidGraves:0,relationships:{},pendingFollowUps:[],storyArchive:[],journalNew:0,divinationUsedToday:false,revealedQuest:null,exploredToday:false,discoveredPlaces:{House:true,Gardens:true,Graveyard:true}};
+const state={version:BUILD_VERSION,day:1,time:'Morning',coins:12,familiar:null,inventory:{Sunmint:2,Thornroot:1,'Grave Soil':1},stats:{Kindness:0,Power:0,Balance:0,Greed:0,Mischief:0},upgrades:{Shop:false,Attic:false,Greenhouse:false,Basement:false},servedToday:false,questIndex:0,graveRisk:0,ghostFavor:0,ghostDebt:0,prepaidGraves:0,relationships:{},pendingFollowUps:[],storyArchive:[],journalNew:0,divinationUsedToday:false,revealedQuest:null,exploredToday:false,discoveredPlaces:{House:true,Gardens:true,Graveyard:true},currentArea:'hub',visitedAreas:{hub:true}};
 const witch={x:720,y:630,vx:0,vy:0,dir:1,facing:'down',speed:0,moving:false,idleTimer:0,idleMode:'none',idleClock:0,step:0}; const logs=[];
 const quests=[
  {id:'mara_baker',name:'Mara the Baker',ask:'Mara wants a potion that will make everyone love her bread.',truth:'Her oven was hexed by jealousy, but she is tempted by shortcut magic.',choices:{good:{text:'Brew a Hearth-Mending Tonic and fix the oven.',need:['Sunmint','Lantern Moss'],stat:'Kindness',coin:6,rel:{trust:2,gratitude:2},follow:'Mara leaves a warm loaf on your step. The village says your magic made honest work bloom again.'},evil:{text:'Enchant the village into craving her bread.',need:['Whisper Mold','Nightshade Bells'],stat:'Power',coin:11,rel:{fear:2,suspicion:1},follow:'Half the village queued for bread at midnight. Mara is rich, but people are starting to worry about their own thoughts.'},gray:{text:'Sell her a one-week popularity charm with a clearly worded contract.',need:['Dewberries'],stat:'Balance',coin:9,rel:{debt:1,trust:1},follow:'Mara paid on time and kept the charm modest. She now owes you a favor and a basket of rolls.'},mischief:{text:'Make the bread sing compliments until people buy it.',need:['Moon Chamomile'],stat:'Mischief',coin:7,rel:{trust:1,suspicion:1},follow:'The singing bread is unbearable, but the children love it. The mayor has banned tenor sourdough after sunset.'}}},
@@ -244,14 +308,43 @@ const fams=[
   {name:'Fox',bonus:'Unlocks clever mischief and gray solutions.',color:'#c06a36'}
 ];
 const spots=[
-  {id:'house',x:1020,y:520,r:150,label:'Purple House',hint:'Open the shop, brew, scry, upgrade, or sleep'},
+  {id:'house',x:1020,y:520,r:150,label:'Purple House',hint:'Enter the house interior'},
   {id:'familiar',x:720,y:655,r:80,label:'Familiar Nook',hint:'Choose or visit your familiar'},
-  {id:'helpGarden',x:1285,y:320,r:100,label:'Helpful Garden',hint:'Gather kind and protective herbs'},
+  {id:'helpGarden',x:1285,y:320,r:100,label:'Helpful Garden',hint:'Enter the garden path'},
   {id:'poisonGarden',x:1310,y:525,r:100,label:'Poisonous Garden',hint:'Gather dangerous ingredients'},
-  {id:'graveyard',x:1310,y:775,r:115,label:'Spirit Graveyard',hint:'Gather eerie ingredients or leave offerings'},
+  {id:'graveyard',x:1310,y:775,r:115,label:'Spirit Graveyard',hint:'Enter the graveyard'},
   {id:'paths',x:285,y:645,r:100,label:'Village Signpost',hint:'Explore the Town Square or Whispering Woods'},
   {id:'well',x:485,y:368,r:62,label:'Old Well',hint:'Peer into the well for rumors and lost things'}
 ];
+const AREA_META={
+  hub:{name:'Village Hub',entry:{x:720,y:630},bounds:{minX:70,maxX:WORLD_W-70,minY:140,maxY:WORLD_H-75}},
+  houseInterior:{name:'Purple House Interior',entry:{x:835,y:720},bounds:{minX:260,maxX:1410,minY:190,maxY:780}},
+  helpfulGarden:{name:'Helpful Garden',entry:{x:835,y:725},bounds:{minX:190,maxX:1480,minY:180,maxY:790}},
+  graveyard:{name:'Spirit Graveyard',entry:{x:835,y:725},bounds:{minX:190,maxX:1480,minY:180,maxY:810}}
+};
+const AREA_SPOTS={
+  hub:spots,
+  houseInterior:[
+    {id:'exitHub',x:835,y:810,r:90,label:'Front Door',hint:'Return to the village hub'},
+    {id:'shopCounter',x:500,y:455,r:95,label:'Shop Counter',hint:"Serve today's visitor"},
+    {id:'cauldron',x:835,y:455,r:95,label:'Cauldron',hint:'Brew prepared potions'},
+    {id:'potionShelf',x:1165,y:455,r:88,label:'Potion Shelf',hint:'Sell or inspect extras'},
+    {id:'atticMirror',x:430,y:250,r:88,label:'Attic Mirror',hint:'Reveal hidden truths'},
+    {id:'journalDesk',x:1220,y:250,r:88,label:'Journal Desk',hint:'Read rumors and memories'},
+    {id:'bed',x:835,y:250,r:88,label:'Bed',hint:'End the day'},
+    {id:'houseUpgrades',x:1345,y:665,r:82,label:'Upgrade Ledger',hint:'Improve rooms and unlocks'}
+  ],
+  helpfulGarden:[
+    {id:'exitHub',x:835,y:810,r:95,label:'Garden Gate',hint:'Return to the village hub'},
+    {id:'helpGardenGather',x:595,y:430,r:115,label:'Sunlit Herb Bed',hint:'Gather kind and protective herbs'},
+    {id:'gardenInspect',x:1035,y:430,r:115,label:'Moonflower Row',hint:'Inspect the garden plan'}
+  ],
+  graveyard:[
+    {id:'exitHub',x:835,y:810,r:95,label:'Iron Gate',hint:'Return to the village hub'},
+    {id:'graveyardGather',x:585,y:430,r:115,label:'Whispering Graves',hint:'Gather spirit ingredients'},
+    {id:'spiritOffering',x:1050,y:430,r:115,label:'Spirit Offering Plate',hint:'Leave offerings or prepay gathering'}
+  ]
+};
 const locationLabels=[
   {name:'Helpful Garden',x:1365,y:272},
   {name:'Poisonous Garden',x:1380,y:485},
@@ -259,6 +352,28 @@ const locationLabels=[
   {name:'Town Square',x:245,y:560},
   {name:'Whispering Woods',x:210,y:670}
 ];
+const AREA_LABELS={
+  hub:locationLabels,
+  houseInterior:[
+    {name:'Shop Counter',x:500,y:382},
+    {name:'Cauldron',x:835,y:382},
+    {name:'Potion Shelf',x:1165,y:382},
+    {name:'Attic Mirror',x:430,y:177},
+    {name:'Journal Desk',x:1220,y:177},
+    {name:'Bed',x:835,y:177},
+    {name:'Front Door',x:835,y:755}
+  ],
+  helpfulGarden:[
+    {name:'Sunlit Herb Bed',x:595,y:360},
+    {name:'Moonflower Row',x:1035,y:360},
+    {name:'Garden Gate',x:835,y:755}
+  ],
+  graveyard:[
+    {name:'Whispering Graves',x:585,y:360},
+    {name:'Spirit Offering',x:1050,y:360},
+    {name:'Iron Gate',x:835,y:755}
+  ]
+};
 
 function esc(s){return String(s).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
 function journalCategory(t){const x=(t||'').toLowerCase(); if(x.startsWith('rumor:')||x.includes('rumor')||x.includes('whisper'))return 'Recent Rumors'; if(x.includes('ghost')||x.includes('spirit')||x.includes('grave')||x.includes('well'))return 'Ghost Ledger'; if(x.includes('attic')||x.includes('divination')||x.includes('vision')||x.includes('mirror'))return 'Attic Visions'; if(x.includes('town square')||x.includes('whispering woods')||x.includes('lantern lane')||x.includes('explored')||x.includes('village')||x.includes('signpost'))return 'Exploration Notes'; if(x.includes('potion')||x.includes('brewed')||x.includes('cauldron')||x.includes('ingredient'))return 'Potion Records'; if(quests.some(q=>x.includes(q.name.toLowerCase())))return 'Villager Notes'; return 'Recent Rumors';}
@@ -269,14 +384,66 @@ function resize(){const box=document.getElementById('gameBox').getBoundingClient
 function updateSceneMetrics(){sceneScale=Math.min(W/WORLD_W,H/WORLD_H);sceneX=(W-WORLD_W*sceneScale)/2;sceneY=(H-WORLD_H*sceneScale)/2;}
 function sx(x){return sceneX+x*sceneScale} function sy(y){return sceneY+y*sceneScale} function sw(v){return v*sceneScale} function cs(){return sceneScale}
 function roundRect(x,y,w,h,r,fill,stroke){ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fillStyle=fill;ctx.fill(); if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=Math.max(1.5,2*cs());ctx.stroke();}}
+function currentArea(){return AREA_META[state.currentArea]?state.currentArea:'hub';}
+function currentSpots(){return AREA_SPOTS[currentArea()]||spots;}
+function currentLabels(){return AREA_LABELS[currentArea()]||locationLabels;}
 function drawBackground(){
-  if(bg.complete && bg.naturalWidth){ctx.drawImage(bg,sceneX,sceneY,WORLD_W*sceneScale,WORLD_H*sceneScale);}
+  if(currentArea()==='hub' && bg.complete && bg.naturalWidth){ctx.drawImage(bg,sceneX,sceneY,WORLD_W*sceneScale,WORLD_H*sceneScale);}
   else{let g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#4a2e5e');g.addColorStop(.5,'#2a2036');g.addColorStop(1,'#161018');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);}
   ctx.fillStyle='rgba(8,5,14,.18)'; ctx.fillRect(0,0,W,H);
   const glow=ctx.createRadialGradient(sx(1030),sy(520),10,sx(1030),sy(520),sw(330)); glow.addColorStop(0,'rgba(255,220,160,.08)'); glow.addColorStop(1,'rgba(0,0,0,0)'); ctx.fillStyle=glow; ctx.fillRect(0,0,W,H);
+  if(currentArea()==='houseInterior')drawHouseInteriorBackdrop();
+  if(currentArea()==='helpfulGarden')drawGardenBackdrop();
+  if(currentArea()==='graveyard')drawGraveyardBackdrop();
 }
 function drawSpotMarker(sp,active){ctx.save();const pulse=(Math.sin(frame*.08)+1)/2;ctx.globalAlpha=active?.92:.48;ctx.beginPath();ctx.arc(sx(sp.x),sy(sp.y),sw(active?sp.r*.42:sp.r*.26)+pulse*sw(4),0,Math.PI*2);ctx.fillStyle=active?'rgba(255,223,174,.15)':'rgba(198,151,228,.10)';ctx.fill();ctx.strokeStyle=active?'rgba(255,223,174,.92)':'rgba(198,151,228,.42)';ctx.lineWidth=Math.max(1.5,2.2*cs());ctx.stroke();ctx.restore();}
-function drawLocationLabels(){ctx.save();ctx.font=`${Math.max(11,14*cs())}px Georgia`;ctx.textAlign='center';locationLabels.forEach(l=>{const tw=ctx.measureText(l.name).width+18;roundRect(sx(l.x)-tw/2,sy(l.y)-sw(16),tw,sw(24),sw(12),'rgba(35,24,39,.82)','rgba(217,180,101,.5)');ctx.fillStyle='#f5dfae';ctx.fillText(l.name,sx(l.x),sy(l.y));});ctx.restore();}
+function drawLocationLabels(){ctx.save();ctx.font=`${Math.max(11,14*cs())}px Georgia`;ctx.textAlign='center';currentLabels().forEach(l=>{const tw=ctx.measureText(l.name).width+18;roundRect(sx(l.x)-tw/2,sy(l.y)-sw(16),tw,sw(24),sw(12),'rgba(35,24,39,.82)','rgba(217,180,101,.5)');ctx.fillStyle='#f5dfae';ctx.fillText(l.name,sx(l.x),sy(l.y));});ctx.restore();}
+function drawAreaTitle(){
+  const meta=AREA_META[currentArea()]||AREA_META.hub;
+  ctx.save();
+  ctx.font=`800 ${Math.max(15,19*cs())}px Georgia`;
+  const text=meta.name;
+  const tw=ctx.measureText(text).width+28;
+  roundRect(sx(44),sy(38),tw,sw(34),sw(14),'rgba(35,24,39,.84)','rgba(217,180,101,.55)');
+  ctx.fillStyle='#fff3d0';
+  ctx.textAlign='left';
+  ctx.fillText(text,sx(58),sy(61));
+  ctx.restore();
+}
+function drawHouseInteriorBackdrop(){
+  ctx.save();
+  roundRect(sx(235),sy(155),sw(1202),sw(680),sw(28),'rgba(55,34,62,.92)','rgba(217,180,101,.38)');
+  roundRect(sx(305),sy(225),sw(1062),sw(535),sw(20),'rgba(93,55,76,.58)','rgba(255,232,176,.18)');
+  roundRect(sx(392),sy(290),sw(216),sw(155),sw(16),'rgba(80,45,54,.88)','rgba(238,207,139,.42)');
+  roundRect(sx(738),sy(285),sw(194),sw(158),sw(18),'rgba(34,58,52,.82)','rgba(155,222,183,.35)');
+  ctx.beginPath();ctx.arc(sx(835),sy(422),sw(62),0,Math.PI*2);ctx.fillStyle='rgba(50,29,49,.95)';ctx.fill();ctx.strokeStyle='rgba(238,207,139,.58)';ctx.lineWidth=sw(5);ctx.stroke();
+  roundRect(sx(1080),sy(286),sw(180),sw(168),sw(14),'rgba(70,46,38,.88)','rgba(238,207,139,.42)');
+  roundRect(sx(738),sy(190),sw(190),sw(92),sw(16),'rgba(45,34,66,.85)','rgba(198,151,228,.44)');
+  roundRect(sx(337),sy(182),sw(184),sw(110),sw(18),'rgba(31,37,58,.88)','rgba(169,214,255,.34)');
+  roundRect(sx(1128),sy(188),sw(186),sw(96),sw(14),'rgba(75,48,42,.88)','rgba(238,207,139,.42)');
+  roundRect(sx(760),sy(770),sw(150),sw(45),sw(12),'rgba(38,24,32,.92)','rgba(238,207,139,.42)');
+  ctx.restore();
+}
+function drawGardenBackdrop(){
+  ctx.save();
+  roundRect(sx(185),sy(160),sw(1300),sw(675),sw(30),'rgba(36,70,52,.9)','rgba(194,233,169,.35)');
+  roundRect(sx(355),sy(290),sw(470),sw(300),sw(28),'rgba(78,112,58,.72)','rgba(239,231,151,.35)');
+  roundRect(sx(855),sy(290),sw(460),sw(300),sw(28),'rgba(52,91,78,.72)','rgba(198,151,228,.35)');
+  for(let i=0;i<18;i++){const x=390+(i%6)*64,y=330+Math.floor(i/6)*70;ctx.fillStyle=i%2?'#eecf8b':'#9bdc9b';ctx.beginPath();ctx.ellipse(sx(x),sy(y),sw(18),sw(26),i*.4,0,Math.PI*2);ctx.fill();}
+  for(let i=0;i<15;i++){const x=910+(i%5)*70,y=340+Math.floor(i/5)*70;ctx.fillStyle=i%2?'#c697e4':'#9bd6ff';ctx.beginPath();ctx.arc(sx(x),sy(y),sw(18),0,Math.PI*2);ctx.fill();}
+  roundRect(sx(760),sy(770),sw(150),sw(45),sw(12),'rgba(34,42,32,.92)','rgba(238,207,139,.42)');
+  ctx.restore();
+}
+function drawGraveyardBackdrop(){
+  ctx.save();
+  roundRect(sx(185),sy(160),sw(1300),sw(690),sw(30),'rgba(38,43,57,.92)','rgba(177,196,232,.34)');
+  for(let i=0;i<8;i++){const x=365+(i%4)*160,y=295+Math.floor(i/4)*145;roundRect(sx(x),sy(y),sw(76),sw(98),sw(26),'rgba(116,124,139,.82)','rgba(226,233,245,.32)');}
+  roundRect(sx(940),sy(330),sw(220),sw(168),sw(18),'rgba(53,47,70,.88)','rgba(169,214,255,.36)');
+  ctx.beginPath();ctx.arc(sx(1050),sy(414),sw(48),0,Math.PI*2);ctx.fillStyle='rgba(83,102,132,.65)';ctx.fill();ctx.strokeStyle='rgba(169,214,255,.5)';ctx.lineWidth=sw(4);ctx.stroke();
+  for(let i=0;i<6;i++){ctx.fillStyle='rgba(169,214,255,.25)';ctx.beginPath();ctx.arc(sx(440+i*155),sy(250+Math.sin(frame*.02+i)*18),sw(18+i%2*8),0,Math.PI*2);ctx.fill();}
+  roundRect(sx(760),sy(770),sw(150),sw(45),sw(12),'rgba(32,33,42,.92)','rgba(238,207,139,.42)');
+  ctx.restore();
+}
 
 
 function spriteStroke(){ctx.strokeStyle='rgba(29,18,35,.9)';ctx.lineWidth=Math.max(1.5,2.1*cs());ctx.lineJoin='round';ctx.lineCap='round';}
@@ -295,7 +462,418 @@ function witchPartsReady(){
   const p=SpriteArt.witchParts;
   return p && Object.values(p).every(spriteReady);
 }
+
+const MODULAR_WITCH_ENABLED=true;
+// Stable Witch Model + Walk Speed Fix.
+// The runtime now builds a cached composite sprite from the uploaded witch parts
+// and draws that assembled sprite as one character. This avoids the exploded
+// paper-doll look caused by independently moving each part during gameplay.
+const STABLE_WITCH_MODEL={normal:null,blink:null,walkA:null,walkB:null,ready:false,w:220,h:260};
+// Hand Visibility + Premium Silhouette tuning. The sleeves remain integrated
+// with the coat, then a small front hand/cuff overlay pass restores readable
+// hands without returning to loose runtime paper-doll animation.
+const STABLE_WITCH_PARTS=[
+  // name, image key, x, y, w, h, alpha, rotation degrees
+  ['hairBack','hairBack',47,67,126,80,.88,0],
+  ['legLeft','legLeft',77,175,47,29,.88,0],
+  ['bootLeft','bootLeft',77,193,33,50,1,0],
+  ['bootRight','bootRight',113,193,39,50,1,0],
+
+  // Sleeve/base-arm pass sits behind the coat for depth.
+  ['armRight','armRight',131,119,43,52,.76,-7],
+  ['armLeft','armLeft',43,128,52,26,.76,4],
+
+  ['hips','hips',69,151,82,51,1,0],
+  ['body','body',53,108,119,108,1,0],
+  ['capeLeft','capeLeft',48,136,44,47,.30,0],
+  ['capeRight','capeRight',131,136,44,47,.30,0],
+  ['skirtFront','skirtFront',57,155,109,64,.66,0],
+  ['faceOpen','faceOpen',73,73,74,61,1,0],
+  ['hairFront','hairFront',58,50,104,64,1,0],
+  ['hairSideLeft','hairSideLeft',56,84,34,32,.86,0],
+  ['hairSideRight','hairSideRight',135,84,28,33,.86,0],
+  ['hairSideLong','hairSideLong',134,72,42,34,.74,0],
+  ['hat','hat',45,5,130,69,.95,0],
+  ['wand','wand',42,153,52,11,.18,-4]
+];
+const STABLE_WITCH_WALK_DELTAS={
+  normal:{},
+  blink:{},
+  walkA:{
+    hips:{x:-1,y:0}, body:{x:-1,y:0}, skirtFront:{x:-1,y:0},
+    bootLeft:{x:-4,y:3,rot:-5},
+    bootRight:{x:3,y:-2,rot:3},
+    legLeft:{x:-2,y:2},
+    armLeft:{x:3,y:1,rot:-5},
+    armRight:{x:-3,y:0,rot:5}
+  },
+  walkB:{
+    hips:{x:1,y:0}, body:{x:1,y:0}, skirtFront:{x:1,y:0},
+    bootLeft:{x:3,y:-2,rot:3},
+    bootRight:{x:-4,y:3,rot:-5},
+    legLeft:{x:2,y:0},
+    armLeft:{x:-3,y:0,rot:5},
+    armRight:{x:3,y:1,rot:-5}
+  }
+};
+// Front hand/cuff overlays: x/y are in composite pixels. They are drawn after
+// the coat/skirt so the hands read at gameplay scale.
+// Front hand/cuff overlays use explicit sleeve-mouth and hand-center anchors.
+// sleeveX/Y = where the sleeve opens; handX/Y = where the palm/fingers sit.
+// This keeps the hands visually seated in the sleeves across normal/walk frames.
+const STABLE_WITCH_HANDS={
+  normal:[
+    {name:'leftHand',side:'left',sleeveX:56,sleeveY:150,handX:52,handY:149,rot:-16,cuffW:17,cuffH:8,handW:15,handH:9,skin:'#f0c4a6',cuff:'#d9b465',sleeve:'#6f45a0'},
+    {name:'rightHand',side:'right',sleeveX:164,sleeveY:148,handX:168,handY:147,rot:14,cuffW:16,cuffH:8,handW:14,handH:9,skin:'#f0c4a6',cuff:'#d9b465',sleeve:'#6f45a0'}
+  ],
+  blink:[
+    {name:'leftHand',side:'left',sleeveX:56,sleeveY:150,handX:52,handY:149,rot:-16,cuffW:17,cuffH:8,handW:15,handH:9,skin:'#f0c4a6',cuff:'#d9b465',sleeve:'#6f45a0'},
+    {name:'rightHand',side:'right',sleeveX:164,sleeveY:148,handX:168,handY:147,rot:14,cuffW:16,cuffH:8,handW:14,handH:9,skin:'#f0c4a6',cuff:'#d9b465',sleeve:'#6f45a0'}
+  ],
+  walkA:[
+    {name:'leftHand',side:'left',sleeveX:58,sleeveY:152,handX:54,handY:152,rot:-20,cuffW:17,cuffH:8,handW:15,handH:9,skin:'#f0c4a6',cuff:'#d9b465',sleeve:'#6f45a0'},
+    {name:'rightHand',side:'right',sleeveX:161,sleeveY:147,handX:165,handY:146,rot:10,cuffW:16,cuffH:8,handW:14,handH:9,skin:'#f0c4a6',cuff:'#d9b465',sleeve:'#6f45a0'}
+  ],
+  walkB:[
+    {name:'leftHand',side:'left',sleeveX:54,sleeveY:149,handX:50,handY:148,rot:-11,cuffW:17,cuffH:8,handW:15,handH:9,skin:'#f0c4a6',cuff:'#d9b465',sleeve:'#6f45a0'},
+    {name:'rightHand',side:'right',sleeveX:167,sleeveY:151,handX:171,handY:150,rot:20,cuffW:16,cuffH:8,handW:14,handH:9,skin:'#f0c4a6',cuff:'#d9b465',sleeve:'#6f45a0'}
+  ]
+};
+function clearStableWitchCache(){
+  STABLE_WITCH_MODEL.normal=null;
+  STABLE_WITCH_MODEL.blink=null;
+  STABLE_WITCH_MODEL.walkA=null;
+  STABLE_WITCH_MODEL.walkB=null;
+  STABLE_WITCH_MODEL.ready=false;
+}
+function drawCachedPart(g,img,x,y,w,h,alpha=1,rotDeg=0){
+  if(!spriteReady(img))return false;
+  g.save();
+  g.globalAlpha=alpha;
+  g.translate(x+w/2,y+h/2);
+  if(rotDeg)g.rotate(rotDeg*Math.PI/180);
+  g.drawImage(img,-w/2,-h/2,w,h);
+  g.restore();
+  return true;
+}
+function drawCompositeHand(g,h){
+  // Sleeve anchor connector: sleeve extension/shadow -> cuff ring -> hand -> sleeve lip.
+  // This makes the palm feel like it emerges from the sleeve opening instead of
+  // sitting as a sticker on top of the coat.
+  const dx=h.handX-h.sleeveX, dy=h.handY-h.sleeveY;
+  const angle=(h.rot||0)*Math.PI/180;
+  const cuffW=h.cuffW||16, cuffH=h.cuffH||8;
+  const handW=h.handW||15, handH=h.handH||9;
+
+  g.save();
+
+  // Short purple sleeve extension from sleeve mouth toward hand.
+  g.save();
+  g.translate(h.sleeveX,h.sleeveY);
+  g.rotate(angle);
+  g.fillStyle=h.sleeve||'#6f45a0';
+  g.strokeStyle='rgba(29,18,35,.72)';
+  g.lineWidth=1.0;
+  g.beginPath();
+  g.roundRect(-cuffW*.58,-cuffH*.46,cuffW*.92,cuffH*.92,3.2);
+  g.fill();
+  g.stroke();
+
+  // Gold cuff ring / sleeve-mouth edge.
+  g.fillStyle=h.cuff||'#d9b465';
+  g.strokeStyle='rgba(64,35,26,.82)';
+  g.lineWidth=.95;
+  g.beginPath();
+  g.ellipse(0,0,cuffW*.39,cuffH*.47,0,0,Math.PI*2);
+  g.fill();
+  g.stroke();
+  g.restore();
+
+  // Small dark connector line in case hand center is offset from sleeve mouth.
+  g.strokeStyle='rgba(29,18,35,.34)';
+  g.lineWidth=1.2;
+  g.lineCap='round';
+  g.beginPath();
+  g.moveTo(h.sleeveX,h.sleeveY);
+  g.lineTo(h.sleeveX+dx*.62,h.sleeveY+dy*.62);
+  g.stroke();
+
+  // Skin/palm sits slightly outside but overlaps the sleeve mouth.
+  g.save();
+  g.translate(h.handX,h.handY);
+  g.rotate(angle);
+  g.fillStyle=h.skin||'#f0c4a6';
+  g.strokeStyle='rgba(74,36,43,.82)';
+  g.lineWidth=1.0;
+  g.beginPath();
+  g.ellipse(0,0,handW*.52,handH*.44,0,0,Math.PI*2);
+  g.fill();
+  g.stroke();
+
+  // Finger hints stay very light so the overlay does not look too cartoony.
+  g.strokeStyle='rgba(120,67,65,.38)';
+  g.lineWidth=.65;
+  g.beginPath();
+  g.moveTo(handW*.05,-handH*.30);
+  g.quadraticCurveTo(handW*.22,-handH*.05,handW*.44,-handH*.06);
+  g.moveTo(handW*.05,handH*.28);
+  g.quadraticCurveTo(handW*.23,handH*.05,handW*.45,handH*.10);
+  g.stroke();
+  g.restore();
+
+  // Top sleeve lip partially overlaps the wrist, embedding the hand in the cuff.
+  g.save();
+  g.translate(h.sleeveX,h.sleeveY);
+  g.rotate(angle);
+  g.strokeStyle='rgba(217,180,101,.78)';
+  g.lineWidth=1.05;
+  g.lineCap='round';
+  g.beginPath();
+  g.arc(0,0,cuffW*.42,-2.7,-.43);
+  g.stroke();
+  g.strokeStyle='rgba(29,18,35,.44)';
+  g.lineWidth=.85;
+  g.beginPath();
+  g.arc(0,0,cuffW*.43,.22,2.55);
+  g.stroke();
+  g.restore();
+
+  g.restore();
+}
+function drawCanvasBlink(g){
+  g.save();
+  g.strokeStyle='rgba(34,19,38,.82)';
+  g.lineWidth=1.7;
+  g.lineCap='round';
+  g.beginPath();
+  g.moveTo(86,95);
+  g.quadraticCurveTo(92,97,99,95);
+  g.moveTo(119,95);
+  g.quadraticCurveTo(125,97,132,95);
+  g.stroke();
+  g.restore();
+}
+function buildStableWitchComposite(mode='normal'){
+  if(mode===true)mode='blink';
+  if(mode===false)mode='normal';
+  if(!['normal','blink','walkA','walkB'].includes(mode))mode='normal';
+
+  const p=SpriteArt.witchParts||{};
+  const required=[p.hat,p.hairBack,p.hairFront,p.faceOpen,p.body,p.hips,p.skirtFront,p.bootLeft,p.bootRight,p.armLeft,p.armRight];
+  if(!required.every(spriteReady))return null;
+  if(STABLE_WITCH_MODEL[mode])return STABLE_WITCH_MODEL[mode];
+
+  const c=document.createElement('canvas');
+  c.width=STABLE_WITCH_MODEL.w; c.height=STABLE_WITCH_MODEL.h;
+  const g=c.getContext('2d');
+  g.clearRect(0,0,c.width,c.height);
+  g.imageSmoothingEnabled=true;
+  g.imageSmoothingQuality='high';
+
+  g.save();
+  g.fillStyle='rgba(0,0,0,.26)';
+  g.beginPath();
+  g.ellipse(110,231,36,8,0,0,Math.PI*2);
+  g.fill();
+  g.restore();
+
+  const deltas=STABLE_WITCH_WALK_DELTAS[mode]||{};
+  for(const part of STABLE_WITCH_PARTS){
+    const [name,key,x,y,w,h,alpha,rot]=part;
+    const d=deltas[name]||{};
+    drawCachedPart(g,p[key],x+(d.x||0),y+(d.y||0),w,h,alpha,(rot||0)+(d.rot||0));
+  }
+
+  // Front hand pass after body/skirt makes the silhouette read as a living character.
+  for(const h of (STABLE_WITCH_HANDS[mode]||STABLE_WITCH_HANDS.normal))drawCompositeHand(g,h);
+
+  // Small baked accents improve coat/skirt readability without changing game logic.
+  g.save();
+  g.globalAlpha=.46;
+  g.strokeStyle='#d9b465';
+  g.lineWidth=1.35;
+  g.beginPath();
+  g.moveTo(83,159);
+  g.lineTo(137,159);
+  g.stroke();
+  g.globalAlpha=.28;
+  g.strokeStyle='#f4d58a';
+  g.beginPath();
+  g.moveTo(107,121);
+  g.lineTo(107,177);
+  g.stroke();
+  g.restore();
+
+  if(mode==='blink')drawCanvasBlink(g);
+
+  STABLE_WITCH_MODEL[mode]=c;
+  STABLE_WITCH_MODEL.ready=true;
+  return c;
+}
+function stableWitchFrameMode(stepOverride=null,movingOverride=null){
+  const moving=(movingOverride===null)?witch.moving:movingOverride;
+  if(!moving)return 'normal';
+  const step=(stepOverride===null)?(witch.step||0):stepOverride;
+  return (Math.floor(step/(Math.PI*.86))%2)===0?'walkA':'walkB';
+}
+function stableWitchBlinking(frameOverride=null,movingOverride=null){
+  const f=(frameOverride===null)?frame:frameOverride;
+  const moving=(movingOverride===null)?witch.moving:movingOverride;
+  return (!moving && (f%390)>386) || (moving && (f%760)>756);
+}
+
+function drawModularWitch(){
+  const moving=witch.moving;
+  const step=witch.step||0;
+  const blink=stableWitchBlinking();
+  const mode=blink?'blink':stableWitchFrameMode();
+  const sprite=buildStableWitchComposite(mode) || buildStableWitchComposite('normal');
+  if(!sprite)return false;
+
+  const stepA=Math.sin(step);
+  const phaseSettle=moving?(0.55+0.45*Math.abs(Math.cos(step*.92))):0;
+  const idleBob=Math.sin(frame*.036)*sw(.14);
+  const walkBob=moving?(Math.abs(stepA)*sw(.22)-phaseSettle*sw(.18)):idleBob;
+  const weightShift=moving?Math.sin(step*.92)*sw(.70):0;
+  const x=sx(witch.x)+weightShift, y=sy(witch.y)+walkBob;
+  const drawW=sw(88), drawH=sw(104);
+
+  ctx.save();
+  ctx.translate(x,y);
+  ctx.drawImage(sprite,-drawW/2,-drawH+sw(10),drawW,drawH);
+  ctx.restore();
+  return true;
+}
+
+// Witch Model Debug Viewer ---------------------------------------------------
+// Toggleable dev panel for inspecting the cached witch model at a large size.
+// It renders only when open and does not affect gameplay, input, or saves.
+function toggleWitchDebugViewer(){
+  witchDebugOpen=!witchDebugOpen;
+  if(witchDebugViewer)witchDebugViewer.classList.toggle('open',witchDebugOpen);
+  if(witchDebugBtn)witchDebugBtn.classList.toggle('debugOn',witchDebugOpen);
+  if(witchDebugOpen)renderWitchDebugViewer();
+}
+function toggleWitchDebugPause(ev){
+  if(ev)ev.stopPropagation();
+  witchDebugPaused=!witchDebugPaused;
+}
+function stepWitchDebugFrame(ev){
+  if(ev)ev.stopPropagation();
+  witchDebugPaused=true;
+  witchDebugManualFrame++;
+  renderWitchDebugViewer();
+}
+function toggleWitchDebugZoom(ev){
+  if(ev)ev.stopPropagation();
+  witchDebugZoom=witchDebugZoom===2?3:2;
+  const btn=ev&&ev.currentTarget?ev.currentTarget:null;
+  if(btn)btn.textContent='Zoom '+witchDebugZoom+'x';
+  renderWitchDebugViewer();
+}
+function toggleWitchDebugMarkers(ev){
+  if(ev)ev.stopPropagation();
+  witchDebugMarkers=!witchDebugMarkers;
+  const btn=ev&&ev.currentTarget?ev.currentTarget:null;
+  if(btn)btn.textContent='Markers '+(witchDebugMarkers?'On':'Off');
+  renderWitchDebugViewer();
+}
+function renderWitchDebugViewer(){
+  if(!witchDebugOpen||!witchDebugCtx||!witchDebugCanvas)return;
+  const g=witchDebugCtx;
+  const cw=witchDebugCanvas.width,ch=witchDebugCanvas.height;
+  const debugFrame=witchDebugPaused?witchDebugManualFrame:frame;
+  const debugStep=witchDebugPaused?witchDebugManualFrame*.22:(witch.step||0);
+  const moving=witchDebugPaused?true:witch.moving;
+  const blink=stableWitchBlinking(debugFrame,moving);
+  const frameMode=blink?'blink':stableWitchFrameMode(debugStep,moving);
+  const sprite=buildStableWitchComposite(frameMode) || buildStableWitchComposite('normal');
+  const stepA=Math.sin(debugStep);
+  const phaseSettle=moving?(0.55+0.45*Math.abs(Math.cos(debugStep*.92))):0;
+  const debugBob=moving?(Math.abs(stepA)*(witchDebugZoom===3?1.6:1.25)-phaseSettle*.55):Math.sin(debugFrame*.036)*0.55;
+  const debugShift=moving?Math.sin(debugStep*.92)*(witchDebugZoom===3?2.0:1.4):0;
+
+  g.save();
+  g.setTransform(1,0,0,1,0,0);
+  g.clearRect(0,0,cw,ch);
+  g.fillStyle='#ffffff';
+  g.fillRect(0,0,cw,ch);
+
+  if(sprite){
+    const drawW=88*witchDebugZoom, drawH=104*witchDebugZoom;
+    const cx=cw/2+debugShift, groundY=(witchDebugZoom===3?286:248)+debugBob;
+    g.save();
+    g.translate(cx,groundY);
+    g.drawImage(sprite,-drawW/2,-drawH+10*witchDebugZoom,drawW,drawH);
+    g.restore();
+
+    if(witchDebugMarkers){
+      g.strokeStyle='rgba(0,0,0,.18)';
+      g.lineWidth=1;
+      g.beginPath();
+      g.moveTo(22,groundY+1);
+      g.lineTo(cw-22,groundY+1);
+      g.moveTo(cw/2,16);
+      g.lineTo(cw/2,ch-16);
+      g.stroke();
+
+      // Origin, rough foot-contact, shoulder, and hand markers.
+      g.fillStyle='rgba(210,40,40,.78)';
+      g.beginPath(); g.arc(cx,groundY,3,0,Math.PI*2); g.fill();
+      g.fillStyle='rgba(40,90,220,.78)';
+      g.beginPath(); g.arc(cx-22*(witchDebugZoom/2),groundY-4,3,0,Math.PI*2); g.fill();
+      g.beginPath(); g.arc(cx+22*(witchDebugZoom/2),groundY-4,3,0,Math.PI*2); g.fill();
+
+      const scale=drawW/STABLE_WITCH_MODEL.w;
+      const baseX=cx-drawW/2,baseY=groundY-drawH+10*witchDebugZoom;
+      const hands=STABLE_WITCH_HANDS[frameMode]||STABLE_WITCH_HANDS.normal;
+
+      // Shoulder markers are purple dots.
+      g.fillStyle='rgba(170,60,210,.78)';
+      g.beginPath();g.arc(baseX+72*scale,baseY+126*scale,3.5,0,Math.PI*2);g.fill();
+      g.beginPath();g.arc(baseX+148*scale,baseY+126*scale,3.5,0,Math.PI*2);g.fill();
+
+      // Sleeve-mouth markers are small gold rings; hand centers are small green rings.
+      for(const h of hands){
+        const sxm=baseX+h.sleeveX*scale, sym=baseY+h.sleeveY*scale;
+        const hxm=baseX+h.handX*scale, hym=baseY+h.handY*scale;
+        g.strokeStyle='rgba(217,150,42,.92)';
+        g.lineWidth=1.4;
+        g.beginPath();g.arc(sxm,sym,4.2,0,Math.PI*2);g.stroke();
+        g.strokeStyle='rgba(20,150,80,.92)';
+        g.lineWidth=1.4;
+        g.beginPath();g.arc(hxm,hym,3.4,0,Math.PI*2);g.stroke();
+        g.strokeStyle='rgba(20,80,40,.42)';
+        g.lineWidth=.9;
+        g.beginPath();g.moveTo(sxm,sym);g.lineTo(hxm,hym);g.stroke();
+      }
+
+      g.strokeStyle='rgba(0,0,0,.18)';
+      g.strokeRect(cx-drawW/2,groundY-drawH+10*witchDebugZoom,drawW,drawH);
+    }
+
+    g.fillStyle='rgba(0,0,0,.72)';
+    g.font='11px ui-monospace,SFMono-Regular,Consolas,monospace';
+    g.textAlign='left';
+    g.fillText(`zoom: ${witchDebugZoom}x   cached frame: ${frameMode}   ${witchDebugPaused?'PAUSED':''}`,10,18);
+  }else{
+    g.fillStyle='#1b1020';
+    g.font='14px system-ui,sans-serif';
+    g.textAlign='center';
+    g.fillText('Witch sprite assets not ready',cw/2,ch/2);
+  }
+  g.restore();
+
+  if(witchDebugStatus){
+    witchDebugStatus.textContent=
+      `facing: ${witch.facing||'down'}   moving: ${witch.moving?'true':'false'}   debug: ${witchDebugPaused?'paused':'live'}\n`+
+      `speed: ${witch.speed.toFixed(3)}   step: ${(witch.step||0).toFixed(2)}   frame: ${frame}\n`+
+      `cached frame: ${frameMode}   markers: ${witchDebugMarkers?'shoulder/sleeve/hand/feet':'off'}`;
+  }
+}
+
 function drawWitch(){
+  if(MODULAR_WITCH_ENABLED && drawModularWitch())return;
   const moving=witch.moving;
   const step=witch.step||0;
   const stepA=Math.sin(step);
@@ -587,7 +1165,7 @@ function drawFamiliar(){
   ctx.restore();
 }
 
-function drawWorld(){ctx.clearRect(0,0,W,H); drawBackground(); drawLocationLabels(); spots.forEach(sp=>drawSpotMarker(sp,near && near.id===sp.id)); drawFamiliar(); drawWitch(); if(near){ctx.save();ctx.font=`700 ${Math.max(12,15*cs())}px Georgia`;const text=near.label;const tw=ctx.measureText(text).width+20;roundRect(sx(near.x)-tw/2,sy(near.y)-sw(near.r*.65)-sw(34),tw,sw(28),sw(12),'rgba(35,24,39,.84)','rgba(217,180,101,.55)');ctx.fillStyle='#fff3d0';ctx.textAlign='center';ctx.fillText(text,sx(near.x),sy(near.y)-sw(near.r*.65)-sw(16));ctx.restore();}}
+function drawWorld(){ctx.clearRect(0,0,W,H); drawBackground(); drawLocationLabels(); drawAreaTitle(); currentSpots().forEach(sp=>drawSpotMarker(sp,near && near.id===sp.id)); drawFamiliar(); drawWitch(); if(near){ctx.save();ctx.font=`700 ${Math.max(12,15*cs())}px Georgia`;const text=near.label;const tw=ctx.measureText(text).width+20;roundRect(sx(near.x)-tw/2,sy(near.y)-sw(near.r*.65)-sw(34),tw,sw(28),sw(12),'rgba(35,24,39,.84)','rgba(217,180,101,.55)');ctx.fillStyle='#fff3d0';ctx.textAlign='center';ctx.fillText(text,sx(near.x),sy(near.y)-sw(near.r*.65)-sw(16));ctx.restore();}}
 function closeModal(){modal.style.display='none';document.getElementById('modalCard').classList.remove('journalCard');}
 function show(title,html){modalCard.innerHTML=`<h2>${title}</h2>${html}<button class="secondary" onclick="closeModal()">Close</button>`; modal.style.display='flex';}
 function addInv(name,n=1){state.inventory[name]=(state.inventory[name]||0)+n;log(`Gathered ${n} ${name}.`); renderSide();}
@@ -655,17 +1233,23 @@ function update(){
   let ax=0,ay=0;
   if(keys.ArrowLeft||keys.a)ax--; if(keys.ArrowRight||keys.d)ax++; if(keys.ArrowUp||keys.w)ay--; if(keys.ArrowDown||keys.s)ay++;
   let len=Math.hypot(ax,ay)||1;
-  witch.vx+=(ax/len)*1.0; witch.vy+=(ay/len)*1.0;
-  witch.vx*=.80; witch.vy*=.80;
-  witch.x=Math.max(70,Math.min(WORLD_W-70,witch.x+witch.vx));
-  witch.y=Math.max(140,Math.min(WORLD_H-75,witch.y+witch.vy));
+  // Slower cozy walk: lower acceleration and stronger damping prevent skating/skittering.
+  witch.vx+=(ax/len)*0.46; witch.vy+=(ay/len)*0.46;
+  witch.vx*=.70; witch.vy*=.70;
+  const maxCozySpeed=1.12;
+  const currentVel=Math.hypot(witch.vx,witch.vy);
+  if(currentVel>maxCozySpeed){witch.vx=witch.vx/currentVel*maxCozySpeed; witch.vy=witch.vy/currentVel*maxCozySpeed;}
+  const bounds=(AREA_META[currentArea()]||AREA_META.hub).bounds;
+  witch.x=Math.max(bounds.minX,Math.min(bounds.maxX,witch.x+witch.vx));
+  witch.y=Math.max(bounds.minY,Math.min(bounds.maxY,witch.y+witch.vy));
   witch.speed=Math.hypot(witch.vx,witch.vy);
-  witch.moving=witch.speed>.35;
+  witch.moving=witch.speed>.18;
   if(Math.abs(witch.vx)>.1)witch.dir=witch.vx>0?1:-1;
   if(witch.moving){
     if(Math.abs(witch.vx)>Math.abs(witch.vy)*.85)witch.facing=witch.vx>0?'right':'left';
     else witch.facing=witch.vy>0?'down':'up';
-    witch.step=(witch.step||0)+0.23+witch.speed*.18;
+    // Step animation now advances more slowly to match the reduced travel speed.
+    witch.step=(witch.step||0)+0.070+witch.speed*.038;
     witch.idleTimer=0; witch.idleMode='none'; witch.idleClock=0;
   } else {
     witch.facing='down';
@@ -682,15 +1266,56 @@ function update(){
     }
   }
   near=null; let best=1e9;
-  for(const sp of spots){let d=Math.hypot(witch.x-sp.x,witch.y-sp.y); if(d<sp.r && d<best){best=d; near=sp;}}
+  for(const sp of currentSpots()){let d=Math.hypot(witch.x-sp.x,witch.y-sp.y); if(d<sp.r && d<best){best=d; near=sp;}}
   if(near){promptEl.style.display='block'; promptEl.textContent=`E: ${near.label} — ${near.hint}`;} else promptEl.style.display='none';
   maybeFootstep();
-  drawWorld(); requestAnimationFrame(update);
+  drawWorld(); renderWitchDebugViewer(); requestAnimationFrame(update);
 }
-function interact(){if(!near)return; const id=near.id; if(id==='house')houseMenu(); if(id==='familiar')familiarMenu(); if(id==='helpGarden')helpGardenGather(); if(id==='poisonGarden')poisonGardenGather(); if(id==='graveyard')graveyardMenu(); if(id==='paths')exploreMenu(); if(id==='well')wellMenu(); renderSide();}
+function enterArea(area){
+  const meta=AREA_META[area]||AREA_META.hub;
+  state.currentArea=area;
+  state.visitedAreas=state.visitedAreas||{};
+  state.visitedAreas[area]=true;
+  state.discoveredPlaces=state.discoveredPlaces||{};
+  state.discoveredPlaces[meta.name]=true;
+  witch.x=meta.entry.x; witch.y=meta.entry.y; witch.vx=0; witch.vy=0; near=null;
+  playSfx('ui');
+  renderSide();
+}
+function exitArea(){
+  state.currentArea='hub';
+  witch.x=1020; witch.y=620; witch.vx=0; witch.vy=0; near=null;
+  playSfx('ui');
+  renderSide();
+}
+function inspectGardenPlan(){playSfx('gather');show('Helpful Garden Plan',`<p>The garden beds are now a playable area framework placeholder. The next roadmap pass can replace instant gathering with timing, plant-reading, and familiar bonuses.</p><p class="small">Toad will be the natural first familiar hook here, with Cat, Raven, Bat, and Fox adding alternate harvest clues later.</p>`);}
+function interact(){
+  if(!near)return;
+  const id=near.id;
+  if(id==='house')enterArea('houseInterior');
+  if(id==='helpGarden')enterArea('helpfulGarden');
+  if(id==='graveyard')enterArea('graveyard');
+  if(id==='exitHub')exitArea();
+  if(id==='familiar')familiarMenu();
+  if(id==='poisonGarden')poisonGardenGather();
+  if(id==='paths')exploreMenu();
+  if(id==='well')wellMenu();
+  if(id==='shopCounter')questMenu();
+  if(id==='cauldron')brewMenu();
+  if(id==='potionShelf')potionShelfMenu();
+  if(id==='atticMirror')atticMenu();
+  if(id==='journalDesk')openJournal('All Entries');
+  if(id==='bed')endDay();
+  if(id==='houseUpgrades')upgradeMenu();
+  if(id==='helpGardenGather')helpGardenGather();
+  if(id==='gardenInspect')inspectGardenPlan();
+  if(id==='graveyardGather')graveyardMenu();
+  if(id==='spiritOffering')offeringMenu();
+  renderSide();
+}
 function helpGardenGather(){playSfx('gather');const items=['Sunmint','Lantern Moss','Dewberries','Moon Chamomile']; addInv(items[Math.floor(Math.random()*items.length)],state.upgrades.Greenhouse?2:1); state.time='Afternoon';}
 function poisonGardenGather(){playSfx('poison');const items=['Thornroot','Nightshade Bells','Widowcap','Whisper Mold']; addInv(items[Math.floor(Math.random()*items.length)]); state.stats.Power+=1; state.time='Afternoon';}
-function houseMenu(){playSfx('ui');show('The Purple House',`<p>The crooked purple house now appears as an isometric village hub with animated witch and familiar sprites while keeping the same systems underneath it. This patch also repositions the interaction hint so the inventory no longer covers it. Use the house to run the core of your witch life. Prepared potions now matter when villagers ask for help.</p><div class="choices"><button class="good" onclick="questMenu()">Open Shop / Serve Today's Visitor</button><button onclick="brewMenu()">Brew at the Cauldron</button><button onclick="potionShelfMenu()">Potion Shelf / Sell Extras</button><button class="secondary" onclick="atticMenu()">Use the Attic Divination Mirror</button><button class="secondary" onclick="upgradeMenu()">House Upgrades</button><button class="secondary" onclick="endDay()">Go to Bed / End Day</button></div>`);}
+function houseMenu(){playSfx('ui');show('The Purple House',`<p>The house now has a playable interior scene. Walk to the counter, cauldron, shelf, mirror, desk, bed, or ledger to use the old house systems as room objects.</p><div class="choices"><button onclick="enterArea('houseInterior')">Enter House Interior</button><button class="good" onclick="questMenu()">Open Shop / Serve Today's Visitor</button><button onclick="brewMenu()">Brew at the Cauldron</button><button onclick="potionShelfMenu()">Potion Shelf / Sell Extras</button><button class="secondary" onclick="atticMenu()">Use the Attic Divination Mirror</button><button class="secondary" onclick="upgradeMenu()">House Upgrades</button><button class="secondary" onclick="endDay()">Go to Bed / End Day</button></div>`);}
 function graveyardMenu(){playSfx('ghost');show('Spirit Graveyard',`<p>The fenced graveyard behind the house is both ingredient source and sacred place.</p><div class="choices"><button onclick="graveyardGather()">Gather Graveyard Ingredients</button><button class="secondary" onclick="offeringMenu()">Use the Spirit Offering Plate</button></div><p class="small">Prepayments make gathering safer. Ghost favor may return gifts; ghost debt may cause overnight trouble.</p>`);}
 function graveyardGather(){playSfx('ghost');const items=['Grave Soil','Bone Dust','Ghostcap','Spirit Thread']; addInv(items[Math.floor(Math.random()*items.length)]); let prepaid=state.prepaidGraves>0; if(prepaid){playSfx('offering');state.prepaidGraves--; state.ghostFavor++; log('Your prepaid offering glows. The graveyard allows the taking.'); if(Math.random()<.45)addInv(items[Math.floor(Math.random()*items.length)]);} else {state.graveRisk++; if(Math.random()<.35+state.graveRisk*.06){playSfx('ghost');state.ghostDebt++; log('A ghost noticed you taking things. The Spirit Ledger records a debt.');}} state.time='Evening'; closeModal(); renderSide();}
 function offeringMenu(){playSfx('offering');show('Spirit Offering Plate',`<p>The stone altar hums softly beneath violet candles.</p><p><b>Favor:</b> ${state.ghostFavor} · <b>Debt:</b> ${state.ghostDebt} · <b>Prepaid gatherings:</b> ${state.prepaidGraves}</p><div class="choices"><button onclick="offerCoin()">Leave 3 coins as an offering</button><button onclick="offerIngredient('Bone Dust')">Offer Bone Dust</button><button onclick="offerIngredient('Grave Soil')">Offer Grave Soil</button><button class="secondary" onclick="prepayGrave()">Prepay your next graveyard gathering — 2 coins</button></div>`);}
@@ -818,10 +1443,10 @@ function openJournal(tab='All Entries'){playSfx('ui'); const entries=journalEntr
 function villageNotesMenu(){openJournal('All Entries');}
 function showRumors(){playSfx('ui'); const rumors=journalEntries().filter(e=>e.category==='Recent Rumors'); const fallback=logs.length?logs.map(t=>normalizeJournalEntry({day:state.day,text:t,category:'Recent Rumors'})):[normalizeJournalEntry({day:state.day,text:'Arrive at the crooked purple house. The village is already whispering.',category:'Recent Rumors'})]; const list=rumors.length?rumors:fallback; show('Rumor Board',`<p>The board keeps the latest whispers pinned in one place before they fade into gossip.</p><div class="journalList">${list.map(journalEntryHTML).join('')}</div><div class="journalTools"><button class="secondary" onclick="openJournal('All Entries')">Open Full Journal</button><button class="secondary" onclick="openJournal('Villager Notes')">Villager Notes</button><button class="secondary" onclick="openJournal('Ghost Ledger')">Ghost Ledger</button></div>`); document.getElementById('modalCard').classList.add('journalCard'); markJournalRead(); renderSide();}
 function showTendencies(){playSfx('ui');show('Witch Tendencies',`<div class="statgrid">${Object.entries(state.stats).map(([k,v])=>`<div class="stat"><b>${k}</b>: ${v}<div class="bar"><div class="fill" style="width:${Math.min(100,(v/Math.max(5,...Object.values(state.stats)))*100)}%"></div></div></div>`).join('')}</div>`);}
-function renderSide(){document.getElementById('versionPill').textContent=BUILD_LABEL; document.getElementById('dayPill').textContent='Day '+state.day; document.getElementById('timePill').textContent=state.time; document.getElementById('coinPill').textContent='Coins '+state.coins; document.getElementById('famBox').innerHTML=state.familiar?`<b>${state.familiar.name}</b><br>${state.familiar.bonus}`:'Choose one at the Familiar Nook.'; document.getElementById('invWorld').innerHTML=inventoryHTML(); let max=Math.max(5,...Object.values(state.stats)); document.getElementById('stats').innerHTML=Object.entries(state.stats).map(([k,v])=>`<div class="stat"><b>${k}</b>: ${v}<div class="bar"><div class="fill" style="width:${Math.min(100,v/max*100)}%"></div></div></div>`).join(''); document.getElementById('upgrades').innerHTML=Object.entries(state.upgrades).map(([k,v])=>`${v?'✓':'○'} ${k}`).join('<br>'); document.getElementById('spiritBox').innerHTML=`Favor ${state.ghostFavor||0} · Debt ${state.ghostDebt||0} · Prepaid ${state.prepaidGraves||0}`; const places=Object.keys(state.discoveredPlaces).join(', '); document.getElementById('mapBox').innerHTML=`Exploration trip today: <b>${state.exploredToday?'Used':'Available'}</b><br>Discovered places: ${places}<br><span class="small">Use the Village Signpost to start exploring the wider village. This is the next roadmap step and the first move toward a future full map.</span>`; document.getElementById('log').innerHTML=logs.map(l=>`<div>${esc(l)}</div>`).join('')||'<div>Arrive at the crooked purple house. The village is already whispering.</div>'; const hasNew=(state.journalNew||0)>0; ['journalBtn','rumorBtn'].forEach(id=>{const b=document.getElementById(id); if(b)b.classList.toggle('hasNew',hasNew);});}
+function renderSide(){document.getElementById('versionPill').textContent=BUILD_LABEL; document.getElementById('dayPill').textContent='Day '+state.day; document.getElementById('timePill').textContent=state.time; document.getElementById('coinPill').textContent='Coins '+state.coins; document.getElementById('famBox').innerHTML=state.familiar?`<b>${state.familiar.name}</b><br>${state.familiar.bonus}`:'Choose one at the Familiar Nook.'; document.getElementById('invWorld').innerHTML=inventoryHTML(); let max=Math.max(5,...Object.values(state.stats)); document.getElementById('stats').innerHTML=Object.entries(state.stats).map(([k,v])=>`<div class="stat"><b>${k}</b>: ${v}<div class="bar"><div class="fill" style="width:${Math.min(100,v/max*100)}%"></div></div></div>`).join(''); document.getElementById('upgrades').innerHTML=Object.entries(state.upgrades).map(([k,v])=>`${v?'✓':'○'} ${k}`).join('<br>'); document.getElementById('spiritBox').innerHTML=`Favor ${state.ghostFavor||0} · Debt ${state.ghostDebt||0} · Prepaid ${state.prepaidGraves||0}`; const places=Object.keys(state.discoveredPlaces).join(', '); const area=(AREA_META[currentArea()]||AREA_META.hub).name; document.getElementById('mapBox').innerHTML=`Current area: <b>${esc(area)}</b><br>Exploration trip today: <b>${state.exploredToday?'Used':'Available'}</b><br>Discovered places: ${places}<br><span class="small">Walk into the Purple House, Helpful Garden, or Spirit Graveyard to test the new area framework.</span>`; document.getElementById('log').innerHTML=logs.map(l=>`<div>${esc(l)}</div>`).join('')||'<div>Arrive at the crooked purple house. The village is already whispering.</div>'; const hasNew=(state.journalNew||0)>0; ['journalBtn','rumorBtn'].forEach(id=>{const b=document.getElementById(id); if(b)b.classList.toggle('hasNew',hasNew);});}
 function saveGame(manual=true){try{localStorage.setItem(SAVE_KEY,JSON.stringify({state,logs})); localStorage.setItem('purpleHouse_latest_key',SAVE_KEY); if(manual){playSfx('save');log('Game saved.');}}catch(e){if(manual)alert('Save failed: '+e.message);}}
-function mergeState(src){if(!src)return; Object.assign(state,src); state.version=BUILD_VERSION; state.inventory=Object.assign({Sunmint:0,Thornroot:0},state.inventory||{}); state.stats=Object.assign({Kindness:0,Power:0,Balance:0,Greed:0,Mischief:0},state.stats||{}); state.upgrades=Object.assign({Shop:false,Attic:false,Greenhouse:false,Basement:false},state.upgrades||{}); state.relationships=state.relationships||{}; state.pendingFollowUps=state.pendingFollowUps||[]; state.storyArchive=(state.storyArchive||[]).map(normalizeJournalEntry); state.journalNew=state.journalNew||0; state.ghostFavor=state.ghostFavor||0; state.ghostDebt=state.ghostDebt||0; state.prepaidGraves=state.prepaidGraves||0; state.divinationUsedToday=!!state.divinationUsedToday; state.revealedQuest=state.revealedQuest||null; state.exploredToday=!!state.exploredToday; state.discoveredPlaces=Object.assign({House:true,Gardens:true,Graveyard:true},state.discoveredPlaces||{});}
-function loadGame(manual=false){try{let key=localStorage.getItem('purpleHouse_latest_key')||SAVE_KEY; let raw=localStorage.getItem(SAVE_KEY)||localStorage.getItem(key)||localStorage.getItem('purpleHouse_v0_4')||localStorage.getItem('purpleHouse_v0_3'); if(!raw){if(manual)alert('No save found.'); return false;} let data=JSON.parse(raw); mergeState(data.state); logs.length=0; (data.logs||[]).slice(0,12).forEach(x=>logs.push(x)); if(manual){playSfx('save');log('Game loaded into '+BUILD_VERSION+'.');} renderSide(); return true;}catch(e){if(manual)alert('Load failed: '+e.message); return false;}}
+function mergeState(src){if(!src)return; Object.assign(state,src); state.version=BUILD_VERSION; state.inventory=Object.assign({Sunmint:0,Thornroot:0},state.inventory||{}); state.stats=Object.assign({Kindness:0,Power:0,Balance:0,Greed:0,Mischief:0},state.stats||{}); state.upgrades=Object.assign({Shop:false,Attic:false,Greenhouse:false,Basement:false},state.upgrades||{}); state.relationships=state.relationships||{}; state.pendingFollowUps=state.pendingFollowUps||[]; state.storyArchive=(state.storyArchive||[]).map(normalizeJournalEntry); state.journalNew=state.journalNew||0; state.ghostFavor=state.ghostFavor||0; state.ghostDebt=state.ghostDebt||0; state.prepaidGraves=state.prepaidGraves||0; state.divinationUsedToday=!!state.divinationUsedToday; state.revealedQuest=state.revealedQuest||null; state.exploredToday=!!state.exploredToday; state.discoveredPlaces=Object.assign({House:true,Gardens:true,Graveyard:true},state.discoveredPlaces||{}); state.visitedAreas=Object.assign({hub:true},state.visitedAreas||{}); if(!AREA_META[state.currentArea])state.currentArea='hub';}
+function loadGame(manual=false){try{let key=localStorage.getItem('purpleHouse_latest_key')||SAVE_KEY; let raw=localStorage.getItem(SAVE_KEY)||localStorage.getItem(key)||localStorage.getItem('purpleHouse_v0.26.06.16.1718')||localStorage.getItem('purpleHouse_v0.26.05.23.1223')||localStorage.getItem('purpleHouse_v0_4')||localStorage.getItem('purpleHouse_v0_3'); if(!raw){if(manual)alert('No save found.'); return false;} let data=JSON.parse(raw); mergeState(data.state); logs.length=0; (data.logs||[]).slice(0,12).forEach(x=>logs.push(x)); if(manual){playSfx('save');log('Game loaded into '+BUILD_VERSION+'.');} renderSide(); return true;}catch(e){if(manual)alert('Load failed: '+e.message); return false;}}
 window.addEventListener('keydown',e=>{unlockAudio();keys[e.key]=true; if(e.key.toLowerCase()==='e')interact(); if(e.key==='Escape')closeModal();});
 window.addEventListener('pointerdown',()=>unlockAudio(),{once:true});
 window.addEventListener('keyup',e=>keys[e.key]=false);
