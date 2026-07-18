@@ -70,6 +70,15 @@ button:disabled{opacity:.52;filter:grayscale(.4);cursor:not-allowed}
 .journalEntry:last-child{margin-bottom:0}.journalMeta{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:5px}.journalBadge{font-size:11px;background:rgba(217,180,101,.18);border:1px solid rgba(217,180,101,.34);color:#ffe7a6;border-radius:999px;padding:2px 7px}.journalNewBadge{background:#eecf8b;color:#251425;border-color:#ffe7a6;font-weight:1000}.journalCutscene{font-size:11px;color:#d6c9dc}.journalText{font-size:14px;line-height:1.38;color:#f7ebcf}.journalEmpty{padding:20px;text-align:center;color:#d6c9dc}.journalTools{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.journalTools button{font-size:12px;padding:7px 9px}.storyPreview{max-height:165px;overflow:auto;background:rgba(0,0,0,.16);border:1px solid rgba(255,255,255,.11);border-radius:12px;padding:7px;margin-top:6px}.storyPreview div{border-bottom:1px solid rgba(255,255,255,.08);padding:4px 0;font-size:12px}
 @media(max-width:980px){.journalHero{grid-template-columns:1fr}.journalList{max-height:46vh}}
 
+.gardenMinigame{display:grid;gap:10px}
+.gardenMeter{height:12px;background:#17111b;border:1px solid rgba(255,255,255,.16);border-radius:999px;overflow:hidden}
+.gardenMeter div{height:100%;background:linear-gradient(90deg,#8ecf84,#eecf8b,#caa4eb)}
+.gardenCards{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.gardenCards button{min-height:116px;text-align:left}
+.gardenCards b{display:block;font-size:15px;margin-bottom:4px}
+.gardenHint{background:rgba(255,255,255,.07);border:1px solid rgba(217,180,101,.28);border-radius:12px;padding:8px;color:#f6e8c5;font-size:13px}
+@media(max-width:720px){.gardenCards{grid-template-columns:1fr}}
+
 /* Witch Model Debug Viewer: dev-only sprite/model inspection panel. */
 .witchDebugViewer{
   position:absolute;
@@ -123,7 +132,7 @@ button:disabled{opacity:.52;filter:grayscale(.4);cursor:not-allowed}
   <div id="gameBox">
     <canvas id="c"></canvas>
     <div id="hud">
-      <div class="pill" id="versionPill">v0.26.06.16.1718 - Witch Sleeve Anchor Hand Alignment</div>
+      <div class="pill" id="versionPill">v0.26.07.17.0915 - Helpful Garden Minigame Slice</div>
       <div class="pill" id="dayPill">Day 1</div>
       <div class="pill" id="timePill">Morning</div>
       <div class="pill" id="coinPill">Coins 12</div>
@@ -191,8 +200,8 @@ button:disabled{opacity:.52;filter:grayscale(.4);cursor:not-allowed}
   </aside>
 </div>
 <script>
-const BUILD_VERSION='v0.26.07.14.0130';
-const BUILD_SUMMARY='Area Framework and House Interior Slice';
+const BUILD_VERSION='v0.26.07.17.0915';
+const BUILD_SUMMARY='Helpful Garden Minigame Slice';
 const BUILD_LABEL=BUILD_VERSION+' - '+BUILD_SUMMARY;
 const SAVE_KEY='purpleHouse_'+BUILD_VERSION;
 const WORLD_W=1672, WORLD_H=941;
@@ -287,7 +296,7 @@ const SpriteArt={
 };
 function spriteReady(img){return img && img.complete && img.naturalWidth>0;}
 const baseRel=()=>({trust:0,fear:0,debt:0,gratitude:0,resentment:0,suspicion:0});
-const state={version:BUILD_VERSION,day:1,time:'Morning',coins:12,familiar:null,inventory:{Sunmint:2,Thornroot:1,'Grave Soil':1},stats:{Kindness:0,Power:0,Balance:0,Greed:0,Mischief:0},upgrades:{Shop:false,Attic:false,Greenhouse:false,Basement:false},servedToday:false,questIndex:0,graveRisk:0,ghostFavor:0,ghostDebt:0,prepaidGraves:0,relationships:{},pendingFollowUps:[],storyArchive:[],journalNew:0,divinationUsedToday:false,revealedQuest:null,exploredToday:false,discoveredPlaces:{House:true,Gardens:true,Graveyard:true},currentArea:'hub',visitedAreas:{hub:true}};
+const state={version:BUILD_VERSION,day:1,time:'Morning',coins:12,familiar:null,inventory:{Sunmint:2,Thornroot:1,'Grave Soil':1},stats:{Kindness:0,Power:0,Balance:0,Greed:0,Mischief:0},upgrades:{Shop:false,Attic:false,Greenhouse:false,Basement:false},servedToday:false,questIndex:0,graveRisk:0,ghostFavor:0,ghostDebt:0,prepaidGraves:0,relationships:{},pendingFollowUps:[],storyArchive:[],journalNew:0,divinationUsedToday:false,revealedQuest:null,exploredToday:false,discoveredPlaces:{House:true,Gardens:true,Graveyard:true},currentArea:'hub',visitedAreas:{hub:true},gardenHarvestedToday:false,gardenStreak:0,gardenBest:'None'};
 const witch={x:720,y:630,vx:0,vy:0,dir:1,facing:'down',speed:0,moving:false,idleTimer:0,idleMode:'none',idleClock:0,step:0}; const logs=[];
 const quests=[
  {id:'mara_baker',name:'Mara the Baker',ask:'Mara wants a potion that will make everyone love her bread.',truth:'Her oven was hexed by jealousy, but she is tempted by shortcut magic.',choices:{good:{text:'Brew a Hearth-Mending Tonic and fix the oven.',need:['Sunmint','Lantern Moss'],stat:'Kindness',coin:6,rel:{trust:2,gratitude:2},follow:'Mara leaves a warm loaf on your step. The village says your magic made honest work bloom again.'},evil:{text:'Enchant the village into craving her bread.',need:['Whisper Mold','Nightshade Bells'],stat:'Power',coin:11,rel:{fear:2,suspicion:1},follow:'Half the village queued for bread at midnight. Mara is rich, but people are starting to worry about their own thoughts.'},gray:{text:'Sell her a one-week popularity charm with a clearly worded contract.',need:['Dewberries'],stat:'Balance',coin:9,rel:{debt:1,trust:1},follow:'Mara paid on time and kept the charm modest. She now owes you a favor and a basket of rolls.'},mischief:{text:'Make the bread sing compliments until people buy it.',need:['Moon Chamomile'],stat:'Mischief',coin:7,rel:{trust:1,suspicion:1},follow:'The singing bread is unbearable, but the children love it. The mayor has banned tenor sourdough after sunset.'}}},
@@ -1169,6 +1178,7 @@ function drawWorld(){ctx.clearRect(0,0,W,H); drawBackground(); drawLocationLabel
 function closeModal(){modal.style.display='none';document.getElementById('modalCard').classList.remove('journalCard');}
 function show(title,html){modalCard.innerHTML=`<h2>${title}</h2>${html}<button class="secondary" onclick="closeModal()">Close</button>`; modal.style.display='flex';}
 function addInv(name,n=1){state.inventory[name]=(state.inventory[name]||0)+n;log(`Gathered ${n} ${name}.`); renderSide();}
+function grantInv(name,n=1){state.inventory[name]=(state.inventory[name]||0)+n; renderSide();}
 function consume(list){for(const k of list){if((state.inventory[k]||0)<=0)return false;} list.forEach(k=>state.inventory[k]--); return true;}
 function hasAll(list){return list.every(k=>(state.inventory[k]||0)>0);}
 function relFor(id){if(!state.relationships[id])state.relationships[id]=baseRel();return state.relationships[id];}
@@ -1181,6 +1191,12 @@ const POTION_RECIPES={
   'Balanced Charm':{need:['Dewberries','Spirit Thread'],stat:'Balance',sell:6,desc:'Used for bargains, fair trades, and careful compromise.'},
   'Trickster Tonic':{need:['Whisper Mold','Moon Chamomile'],stat:'Mischief',sell:6,desc:'Used for pranks, irony, loopholes, and chaotic solutions.'}
 };
+const HELPFUL_GARDEN_PLANTS=[
+  {item:'Sunmint',sign:'gold leaves',care:'warmth',clue:'turns toward candlelight',rare:'Moon Chamomile'},
+  {item:'Lantern Moss',sign:'green glow',care:'patience',clue:'dims when hurried',rare:'Spirit Thread'},
+  {item:'Dewberries',sign:'silver dew',care:'gentle hands',clue:'rings softly when ripe',rare:'Moon Chamomile'}
+];
+let activeGardenRun=null;
 const CHOICE_POTION={good:'Kind Remedy',evil:'Minor Hex',gray:'Balanced Charm',mischief:'Trickster Tonic'};
 const SPIRIT_ITEMS=new Set(['Grave Soil','Bone Dust','Ghostcap','Spirit Thread']);
 const POTION_ITEMS=new Set(Object.keys(POTION_RECIPES));
@@ -1288,7 +1304,83 @@ function exitArea(){
   playSfx('ui');
   renderSide();
 }
-function inspectGardenPlan(){playSfx('gather');show('Helpful Garden Plan',`<p>The garden beds are now a playable area framework placeholder. The next roadmap pass can replace instant gathering with timing, plant-reading, and familiar bonuses.</p><p class="small">Toad will be the natural first familiar hook here, with Cat, Raven, Bat, and Fox adding alternate harvest clues later.</p>`);}
+function gardenFamiliarHint(){
+  const fam=state.familiar&&state.familiar.name?state.familiar.name:null;
+  if(fam==='Toad')return 'Toad steadies the cauldron-side instincts: one weak read becomes good.';
+  if(fam==='Black Cat')return 'Black Cat warns when a pretty plant is lying about ripeness.';
+  if(fam==='Raven')return 'Raven remembers omens and reveals which sign matters most.';
+  if(fam==='Bat')return 'Bat hears night-sap moving under the leaves.';
+  if(fam==='Fox')return 'Fox spots an alternate harvest tucked between the rows.';
+  return 'No familiar is reading the beds with you today.';
+}
+function buildGardenRun(){
+  const target=HELPFUL_GARDEN_PLANTS[Math.floor(Math.random()*HELPFUL_GARDEN_PLANTS.length)];
+  const order=[...HELPFUL_GARDEN_PLANTS].sort(()=>Math.random()-.5);
+  const moon=Math.floor(45+Math.random()*41);
+  return {target:target.item,sign:target.sign,care:target.care,clue:target.clue,moon,plants:order.map((p,i)=>({item:p.item,sign:p.sign,care:p.care,clue:p.clue,rare:p.rare,index:i}))};
+}
+function inspectGardenPlan(){
+  playSfx('gather');
+  const rows=(state.gardenRecords||[]).slice(0,6).map(r=>`<div>Day ${r.day}: ${esc(r.outcome)} harvest - ${esc(r.item)} x${r.qty}${r.rare?`, rare ${esc(r.rare)}`:''}</div>`).join('')||'<div>No careful harvests recorded yet.</div>';
+  show('Helpful Garden Plan',`<p>The Helpful Garden now uses the first playable harvest slice: read the day's sign, choose a plant bed, and earn poor, good, excellent, or rare results.</p><div class="gardenHint"><b>Familiar read:</b> ${esc(gardenFamiliarHint())}</div><div class="storyPreview">${rows}</div>`);
+}
+function helpGardenGather(){
+  playSfx('gather');
+  if(state.gardenHarvestedToday){
+    show('Helpful Garden',`<p>The helpful beds need moonlight and quiet before another careful harvest.</p><p class="small">Return tomorrow. The old instant-gather action has become a once-per-day minigame so harvest results can matter.</p>`);
+    return;
+  }
+  activeGardenRun=buildGardenRun();
+  const pct=Math.max(8,Math.min(100,activeGardenRun.moon));
+  const buttons=activeGardenRun.plants.map((p,i)=>`<button onclick="resolveGardenHarvest(${i})"><b>${esc(p.item)}</b><span class="small">Sign: ${esc(p.sign)}<br>Care: ${esc(p.care)}<br>Read: ${esc(p.clue)}</span></button>`).join('');
+  show('Helpful Garden Harvest',`<div class="gardenMinigame"><p>The beds answer one careful harvest each day. Match the plant to the strongest sign in the garden, then let your familiar nudge the result.</p><div class="gardenHint"><b>Today's sign:</b> ${esc(activeGardenRun.sign)}. The garden wants ${esc(activeGardenRun.care)}. One row ${esc(activeGardenRun.clue)}.</div><div><span class="small">Moon-sap steadiness</span><div class="gardenMeter"><div style="width:${pct}%"></div></div></div><div class="gardenHint"><b>Familiar read:</b> ${esc(gardenFamiliarHint())}</div><div class="gardenCards">${buttons}</div></div>`);
+}
+function gardenScoreFor(plant){
+  let score=plant.item===activeGardenRun.target?2:0;
+  if(plant.sign===activeGardenRun.sign)score++;
+  if(plant.care===activeGardenRun.care)score++;
+  if(activeGardenRun.moon>=72)score++;
+  const fam=state.familiar&&state.familiar.name?state.familiar.name:null;
+  if(fam==='Toad'&&score<3)score++;
+  if(fam==='Black Cat'&&plant.item!==activeGardenRun.target)score--;
+  if(fam==='Raven'&&plant.sign===activeGardenRun.sign)score++;
+  if(fam==='Bat'&&state.time==='Evening')score++;
+  if(fam==='Fox'&&plant.item!==activeGardenRun.target)score++;
+  if(state.upgrades.Greenhouse)score++;
+  return Math.max(0,score);
+}
+function gardenOutcome(score){
+  if(score>=6)return 'Rare';
+  if(score>=4)return 'Excellent';
+  if(score>=2)return 'Good';
+  return 'Poor';
+}
+function resolveGardenHarvest(index){
+  if(!activeGardenRun||state.gardenHarvestedToday)return;
+  const plant=activeGardenRun.plants[index];
+  if(!plant)return;
+  const score=gardenScoreFor(plant);
+  const outcome=gardenOutcome(score);
+  const qty={Poor:1,Good:2,Excellent:3,Rare:3}[outcome]||1;
+  grantInv(plant.item,qty);
+  let rare=null;
+  if(outcome==='Rare'){rare=plant.rare; grantInv(rare,1); state.stats.Kindness+=2; state.gardenStreak=(state.gardenStreak||0)+1;}
+  else if(outcome==='Excellent'){state.stats.Kindness+=1; state.gardenStreak=(state.gardenStreak||0)+1;}
+  else if(outcome==='Good'){state.gardenStreak=(state.gardenStreak||0)+1;}
+  else {state.gardenStreak=0;}
+  state.gardenBest=(['None','Poor','Good','Excellent','Rare'].indexOf(outcome)>['None','Poor','Good','Excellent','Rare'].indexOf(state.gardenBest||'None'))?outcome:state.gardenBest;
+  state.gardenHarvestedToday=true;
+  state.time='Afternoon';
+  state.gardenRecords=state.gardenRecords||[];
+  state.gardenRecords.unshift({day:state.day,outcome,item:plant.item,qty,rare});
+  state.gardenRecords.splice(12);
+  const line=`${outcome} Helpful Garden ingredient harvest: ${plant.item} x${qty}${rare?` plus ${rare}`:''}.`;
+  log(line);
+  closeModal();
+  show('Harvest Result',`<p>${esc(line)}</p><div class="gardenHint"><b>Garden read:</b> The target sign was ${esc(activeGardenRun.sign)} and the bed wanted ${esc(activeGardenRun.care)}.</div><p class="small">Best harvest: ${esc(state.gardenBest||outcome)}. Current careful-harvest streak: ${state.gardenStreak||0}.</p>`);
+  activeGardenRun=null;
+  renderSide();
+}
 function interact(){
   if(!near)return;
   const id=near.id;
@@ -1313,7 +1405,6 @@ function interact(){
   if(id==='spiritOffering')offeringMenu();
   renderSide();
 }
-function helpGardenGather(){playSfx('gather');const items=['Sunmint','Lantern Moss','Dewberries','Moon Chamomile']; addInv(items[Math.floor(Math.random()*items.length)],state.upgrades.Greenhouse?2:1); state.time='Afternoon';}
 function poisonGardenGather(){playSfx('poison');const items=['Thornroot','Nightshade Bells','Widowcap','Whisper Mold']; addInv(items[Math.floor(Math.random()*items.length)]); state.stats.Power+=1; state.time='Afternoon';}
 function houseMenu(){playSfx('ui');show('The Purple House',`<p>The house now has a playable interior scene. Walk to the counter, cauldron, shelf, mirror, desk, bed, or ledger to use the old house systems as room objects.</p><div class="choices"><button onclick="enterArea('houseInterior')">Enter House Interior</button><button class="good" onclick="questMenu()">Open Shop / Serve Today's Visitor</button><button onclick="brewMenu()">Brew at the Cauldron</button><button onclick="potionShelfMenu()">Potion Shelf / Sell Extras</button><button class="secondary" onclick="atticMenu()">Use the Attic Divination Mirror</button><button class="secondary" onclick="upgradeMenu()">House Upgrades</button><button class="secondary" onclick="endDay()">Go to Bed / End Day</button></div>`);}
 function graveyardMenu(){playSfx('ghost');show('Spirit Graveyard',`<p>The fenced graveyard behind the house is both ingredient source and sacred place.</p><div class="choices"><button onclick="graveyardGather()">Gather Graveyard Ingredients</button><button class="secondary" onclick="offeringMenu()">Use the Spirit Offering Plate</button></div><p class="small">Prepayments make gathering safer. Ghost favor may return gifts; ghost debt may cause overnight trouble.</p>`);}
@@ -1429,9 +1520,9 @@ function showDaySummary(s){const coinDelta=state.coins-s.coins; const ghostDelta
     <div class="journalSummary"><b>Village memory</b><br>${s.rumors?`${s.rumors} rumor${s.rumors===1?'':'s'} surfaced overnight.`:'No delayed rumors arrived.'}<br>The village speaks most about your ${esc(s.top.toLowerCase())}.</div>
   </div>
   <h2>Tendency Shifts</h2><div class="inv">${statDeltaHTML(s.stats)}</div>
-  <h2>Morning Stock</h2><p class="small">The garden restored 1 Sunmint and 1 Thornroot.</p>
+  <h2>Morning Stock</h2><p class="small">The garden restored 1 Sunmint and 1 Thornroot. Helpful Garden harvest is available again.</p>
   <div class="journalTools"><button class="secondary" onclick="openJournal('Recent Rumors')">Read Rumors</button><button class="secondary" onclick="openJournal('All Entries')">Open Journal</button></div>`);}
-function endDay(){playSfx('sleep');setTimeout(()=>playSfx('snore'),520);const summary={previousDay:state.day,coins:state.coins,stats:{...state.stats},ghostFavor:state.ghostFavor,ghostDebt:state.ghostDebt,rumors:0,top:(Object.entries(state.stats).sort((a,b)=>b[1]-a[1])[0]||['mystery',0])[0]}; state.day++; state.time='Morning'; state.servedToday=false; state.divinationUsedToday=false; state.revealedQuest=null; state.graveRisk=Math.max(0,state.graveRisk-1); state.exploredToday=false; state.inventory.Sunmint=(state.inventory.Sunmint||0)+1; state.inventory.Thornroot=(state.inventory.Thornroot||0)+1; let due=state.pendingFollowUps.filter(f=>f.day<=state.day); summary.rumors=due.length; state.pendingFollowUps=state.pendingFollowUps.filter(f=>f.day>state.day); if(due.length){due.forEach(f=>{log('Rumor: '+f.text); if(f.type==='evil')state.stats.Power++; if(f.type==='good')state.stats.Kindness++; if(f.type==='mischief')state.stats.Mischief++; if(f.type==='gray')state.stats.Balance++;});} else log(`Day ${state.day} begins. The village whispers most about your ${summary.top.toLowerCase()}.`); if(state.ghostDebt>0 && Math.random()<0.35){state.coins=Math.max(0,state.coins-state.ghostDebt); log('Unpaid ghost debt rattled the cupboards. Some coins went missing overnight.');} if(state.ghostFavor>0 && Math.random()<0.3){const gift=['Bone Dust','Spirit Thread','Ghostcap'][Math.floor(Math.random()*3)]; state.inventory[gift]=(state.inventory[gift]||0)+1; state.ghostFavor--; log(`A grateful ghost left ${gift} by the plate.`);} saveGame(false); renderSide(); showDaySummary(summary);}
+function endDay(){playSfx('sleep');setTimeout(()=>playSfx('snore'),520);const summary={previousDay:state.day,coins:state.coins,stats:{...state.stats},ghostFavor:state.ghostFavor,ghostDebt:state.ghostDebt,rumors:0,top:(Object.entries(state.stats).sort((a,b)=>b[1]-a[1])[0]||['mystery',0])[0]}; state.day++; state.time='Morning'; state.servedToday=false; state.divinationUsedToday=false; state.revealedQuest=null; state.graveRisk=Math.max(0,state.graveRisk-1); state.exploredToday=false; state.gardenHarvestedToday=false; activeGardenRun=null; state.inventory.Sunmint=(state.inventory.Sunmint||0)+1; state.inventory.Thornroot=(state.inventory.Thornroot||0)+1; let due=state.pendingFollowUps.filter(f=>f.day<=state.day); summary.rumors=due.length; state.pendingFollowUps=state.pendingFollowUps.filter(f=>f.day>state.day); if(due.length){due.forEach(f=>{log('Rumor: '+f.text); if(f.type==='evil')state.stats.Power++; if(f.type==='good')state.stats.Kindness++; if(f.type==='mischief')state.stats.Mischief++; if(f.type==='gray')state.stats.Balance++;});} else log(`Day ${state.day} begins. The village whispers most about your ${summary.top.toLowerCase()}.`); if(state.ghostDebt>0 && Math.random()<0.35){state.coins=Math.max(0,state.coins-state.ghostDebt); log('Unpaid ghost debt rattled the cupboards. Some coins went missing overnight.');} if(state.ghostFavor>0 && Math.random()<0.3){const gift=['Bone Dust','Spirit Thread','Ghostcap'][Math.floor(Math.random()*3)]; state.inventory[gift]=(state.inventory[gift]||0)+1; state.ghostFavor--; log(`A grateful ghost left ${gift} by the plate.`);} saveGame(false); renderSide(); showDaySummary(summary);}
 const JOURNAL_TABS=['Recent Rumors','Villager Notes','Ghost Ledger','Attic Visions','Exploration Notes','Potion Records'];
 function journalEntries(){return (state.storyArchive||[]).map(normalizeJournalEntry);}
 function journalCounts(){const counts={}; journalEntries().forEach(e=>counts[e.category]=(counts[e.category]||0)+1); return counts;}
@@ -1443,10 +1534,10 @@ function openJournal(tab='All Entries'){playSfx('ui'); const entries=journalEntr
 function villageNotesMenu(){openJournal('All Entries');}
 function showRumors(){playSfx('ui'); const rumors=journalEntries().filter(e=>e.category==='Recent Rumors'); const fallback=logs.length?logs.map(t=>normalizeJournalEntry({day:state.day,text:t,category:'Recent Rumors'})):[normalizeJournalEntry({day:state.day,text:'Arrive at the crooked purple house. The village is already whispering.',category:'Recent Rumors'})]; const list=rumors.length?rumors:fallback; show('Rumor Board',`<p>The board keeps the latest whispers pinned in one place before they fade into gossip.</p><div class="journalList">${list.map(journalEntryHTML).join('')}</div><div class="journalTools"><button class="secondary" onclick="openJournal('All Entries')">Open Full Journal</button><button class="secondary" onclick="openJournal('Villager Notes')">Villager Notes</button><button class="secondary" onclick="openJournal('Ghost Ledger')">Ghost Ledger</button></div>`); document.getElementById('modalCard').classList.add('journalCard'); markJournalRead(); renderSide();}
 function showTendencies(){playSfx('ui');show('Witch Tendencies',`<div class="statgrid">${Object.entries(state.stats).map(([k,v])=>`<div class="stat"><b>${k}</b>: ${v}<div class="bar"><div class="fill" style="width:${Math.min(100,(v/Math.max(5,...Object.values(state.stats)))*100)}%"></div></div></div>`).join('')}</div>`);}
-function renderSide(){document.getElementById('versionPill').textContent=BUILD_LABEL; document.getElementById('dayPill').textContent='Day '+state.day; document.getElementById('timePill').textContent=state.time; document.getElementById('coinPill').textContent='Coins '+state.coins; document.getElementById('famBox').innerHTML=state.familiar?`<b>${state.familiar.name}</b><br>${state.familiar.bonus}`:'Choose one at the Familiar Nook.'; document.getElementById('invWorld').innerHTML=inventoryHTML(); let max=Math.max(5,...Object.values(state.stats)); document.getElementById('stats').innerHTML=Object.entries(state.stats).map(([k,v])=>`<div class="stat"><b>${k}</b>: ${v}<div class="bar"><div class="fill" style="width:${Math.min(100,v/max*100)}%"></div></div></div>`).join(''); document.getElementById('upgrades').innerHTML=Object.entries(state.upgrades).map(([k,v])=>`${v?'✓':'○'} ${k}`).join('<br>'); document.getElementById('spiritBox').innerHTML=`Favor ${state.ghostFavor||0} · Debt ${state.ghostDebt||0} · Prepaid ${state.prepaidGraves||0}`; const places=Object.keys(state.discoveredPlaces).join(', '); const area=(AREA_META[currentArea()]||AREA_META.hub).name; document.getElementById('mapBox').innerHTML=`Current area: <b>${esc(area)}</b><br>Exploration trip today: <b>${state.exploredToday?'Used':'Available'}</b><br>Discovered places: ${places}<br><span class="small">Walk into the Purple House, Helpful Garden, or Spirit Graveyard to test the new area framework.</span>`; document.getElementById('log').innerHTML=logs.map(l=>`<div>${esc(l)}</div>`).join('')||'<div>Arrive at the crooked purple house. The village is already whispering.</div>'; const hasNew=(state.journalNew||0)>0; ['journalBtn','rumorBtn'].forEach(id=>{const b=document.getElementById(id); if(b)b.classList.toggle('hasNew',hasNew);});}
+function renderSide(){document.getElementById('versionPill').textContent=BUILD_LABEL; document.getElementById('dayPill').textContent='Day '+state.day; document.getElementById('timePill').textContent=state.time; document.getElementById('coinPill').textContent='Coins '+state.coins; document.getElementById('famBox').innerHTML=state.familiar?`<b>${state.familiar.name}</b><br>${state.familiar.bonus}`:'Choose one at the Familiar Nook.'; document.getElementById('invWorld').innerHTML=inventoryHTML(); let max=Math.max(5,...Object.values(state.stats)); document.getElementById('stats').innerHTML=Object.entries(state.stats).map(([k,v])=>`<div class="stat"><b>${k}</b>: ${v}<div class="bar"><div class="fill" style="width:${Math.min(100,v/max*100)}%"></div></div></div>`).join(''); document.getElementById('upgrades').innerHTML=Object.entries(state.upgrades).map(([k,v])=>`${v?'✓':'○'} ${k}`).join('<br>'); document.getElementById('spiritBox').innerHTML=`Favor ${state.ghostFavor||0} · Debt ${state.ghostDebt||0} · Prepaid ${state.prepaidGraves||0}`; const places=Object.keys(state.discoveredPlaces).join(', '); const area=(AREA_META[currentArea()]||AREA_META.hub).name; document.getElementById('mapBox').innerHTML=`Current area: <b>${esc(area)}</b><br>Exploration trip today: <b>${state.exploredToday?'Used':'Available'}</b><br>Helpful harvest: <b>${state.gardenHarvestedToday?'Used':'Available'}</b><br>Best garden result: ${esc(state.gardenBest||'None')}<br>Discovered places: ${places}<br><span class="small">The Helpful Garden now has a once-per-day harvest minigame with familiar bonuses.</span>`; document.getElementById('log').innerHTML=logs.map(l=>`<div>${esc(l)}</div>`).join('')||'<div>Arrive at the crooked purple house. The village is already whispering.</div>'; const hasNew=(state.journalNew||0)>0; ['journalBtn','rumorBtn'].forEach(id=>{const b=document.getElementById(id); if(b)b.classList.toggle('hasNew',hasNew);});}
 function saveGame(manual=true){try{localStorage.setItem(SAVE_KEY,JSON.stringify({state,logs})); localStorage.setItem('purpleHouse_latest_key',SAVE_KEY); if(manual){playSfx('save');log('Game saved.');}}catch(e){if(manual)alert('Save failed: '+e.message);}}
-function mergeState(src){if(!src)return; Object.assign(state,src); state.version=BUILD_VERSION; state.inventory=Object.assign({Sunmint:0,Thornroot:0},state.inventory||{}); state.stats=Object.assign({Kindness:0,Power:0,Balance:0,Greed:0,Mischief:0},state.stats||{}); state.upgrades=Object.assign({Shop:false,Attic:false,Greenhouse:false,Basement:false},state.upgrades||{}); state.relationships=state.relationships||{}; state.pendingFollowUps=state.pendingFollowUps||[]; state.storyArchive=(state.storyArchive||[]).map(normalizeJournalEntry); state.journalNew=state.journalNew||0; state.ghostFavor=state.ghostFavor||0; state.ghostDebt=state.ghostDebt||0; state.prepaidGraves=state.prepaidGraves||0; state.divinationUsedToday=!!state.divinationUsedToday; state.revealedQuest=state.revealedQuest||null; state.exploredToday=!!state.exploredToday; state.discoveredPlaces=Object.assign({House:true,Gardens:true,Graveyard:true},state.discoveredPlaces||{}); state.visitedAreas=Object.assign({hub:true},state.visitedAreas||{}); if(!AREA_META[state.currentArea])state.currentArea='hub';}
-function loadGame(manual=false){try{let key=localStorage.getItem('purpleHouse_latest_key')||SAVE_KEY; let raw=localStorage.getItem(SAVE_KEY)||localStorage.getItem(key)||localStorage.getItem('purpleHouse_v0.26.06.16.1718')||localStorage.getItem('purpleHouse_v0.26.05.23.1223')||localStorage.getItem('purpleHouse_v0_4')||localStorage.getItem('purpleHouse_v0_3'); if(!raw){if(manual)alert('No save found.'); return false;} let data=JSON.parse(raw); mergeState(data.state); logs.length=0; (data.logs||[]).slice(0,12).forEach(x=>logs.push(x)); if(manual){playSfx('save');log('Game loaded into '+BUILD_VERSION+'.');} renderSide(); return true;}catch(e){if(manual)alert('Load failed: '+e.message); return false;}}
+function mergeState(src){if(!src)return; Object.assign(state,src); state.version=BUILD_VERSION; state.inventory=Object.assign({Sunmint:0,Thornroot:0},state.inventory||{}); state.stats=Object.assign({Kindness:0,Power:0,Balance:0,Greed:0,Mischief:0},state.stats||{}); state.upgrades=Object.assign({Shop:false,Attic:false,Greenhouse:false,Basement:false},state.upgrades||{}); state.relationships=state.relationships||{}; state.pendingFollowUps=state.pendingFollowUps||[]; state.storyArchive=(state.storyArchive||[]).map(normalizeJournalEntry); state.journalNew=state.journalNew||0; state.ghostFavor=state.ghostFavor||0; state.ghostDebt=state.ghostDebt||0; state.prepaidGraves=state.prepaidGraves||0; state.divinationUsedToday=!!state.divinationUsedToday; state.revealedQuest=state.revealedQuest||null; state.exploredToday=!!state.exploredToday; state.gardenHarvestedToday=!!state.gardenHarvestedToday; state.gardenStreak=state.gardenStreak||0; state.gardenBest=state.gardenBest||'None'; state.gardenRecords=Array.isArray(state.gardenRecords)?state.gardenRecords:[]; state.discoveredPlaces=Object.assign({House:true,Gardens:true,Graveyard:true},state.discoveredPlaces||{}); state.visitedAreas=Object.assign({hub:true},state.visitedAreas||{}); if(!AREA_META[state.currentArea])state.currentArea='hub';}
+function loadGame(manual=false){try{let key=localStorage.getItem('purpleHouse_latest_key')||SAVE_KEY; let raw=localStorage.getItem(SAVE_KEY)||localStorage.getItem(key)||localStorage.getItem('purpleHouse_v0.26.07.14.0130')||localStorage.getItem('purpleHouse_v0.26.06.16.1718')||localStorage.getItem('purpleHouse_v0.26.05.23.1223')||localStorage.getItem('purpleHouse_v0_4')||localStorage.getItem('purpleHouse_v0_3'); if(!raw){if(manual)alert('No save found.'); return false;} let data=JSON.parse(raw); mergeState(data.state); logs.length=0; (data.logs||[]).slice(0,12).forEach(x=>logs.push(x)); if(manual){playSfx('save');log('Game loaded into '+BUILD_VERSION+'.');} renderSide(); return true;}catch(e){if(manual)alert('Load failed: '+e.message); return false;}}
 window.addEventListener('keydown',e=>{unlockAudio();keys[e.key]=true; if(e.key.toLowerCase()==='e')interact(); if(e.key==='Escape')closeModal();});
 window.addEventListener('pointerdown',()=>unlockAudio(),{once:true});
 window.addEventListener('keyup',e=>keys[e.key]=false);
